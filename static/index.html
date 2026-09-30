@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bounty Workbench</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand"><span class="mark">BW</span><div><strong>Bounty<br>Workbench</strong><small>LOCAL RESEARCH DESK</small></div></div>
+      <nav aria-label="Sections"><button class="nav active" data-view="overview">Overview</button><button class="nav" data-view="engagements">Engagements</button><button class="nav" data-view="tools">Tool catalog</button><button class="nav" data-view="about">About &amp; limits</button></nav>
+      <div class="rail-foot"><span class="live-dot"></span> Local only <small>127.0.0.1 · no cloud account</small></div>
+    </aside>
+    <main>
+      <header class="top"><div><span class="eyebrow">RESEARCH WORKSPACE</span><h1 id="page-title">Overview</h1></div><span class="chip">STANDARD LIBRARY ONLY</span></header>
+      <div id="message" role="status" aria-live="polite"></div>
+      <section id="overview" class="view">
+        <div class="hero"><div><span class="eyebrow">FROM QUESTION TO EVIDENCE</span><h2>Keep the scope visible.<br><em>Make the proof small.</em></h2><p>Create an engagement, state a hypothesis, and verify the workflow against the included local lab. Bounty targets stay in planning until their current rules and an execution adapter are reviewed.</p><button id="new-from-overview" class="primary">New engagement <span>↗</span></button></div><div class="hero-art"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="core">01<span>PLAN</span></div><div class="orbit-label label-a">02 · CHECK</div><div class="orbit-label label-b">03 · EVIDENCE</div></div></div>
+        <div class="stats"><article><span>Engagements</span><strong id="engagement-count">0</strong><small>Stored on this computer</small></article><article><span>Lab readiness</span><strong>Ready</strong><small>Bundled synthetic target</small></article><article><span>Live scanners</span><strong>Off</strong><small>Cataloged, never launched</small></article></div>
+        <div class="section-head"><div><span class="eyebrow">GET STARTED</span><h3>A complete local workflow</h3></div></div>
+        <div class="steps"><article><b>01</b><h4>Create a lab engagement</h4><p>Record the owner and source of permission.</p></article><article><b>02</b><h4>Write a hypothesis</h4><p>State the attacker benefit you want to test.</p></article><article><b>03</b><h4>Run the two-request check</h4><p>Review a negative control and sanitized evidence.</p></article></div>
+      </section>
+      <section id="engagements" class="view hidden">
+        <div class="section-head"><div><span class="eyebrow">YOUR WORK</span><h3>Engagements</h3></div><button id="new-engagement" class="primary">+ New engagement</button></div>
+        <div id="engagement-list" class="cards"></div>
+        <div id="detail" class="hidden"></div>
+      </section>
+      <section id="tools" class="view hidden"><div class="section-head"><div><span class="eyebrow">CURATED CAPABILITIES</span><h3>Tool catalog</h3></div></div><p class="intro">These are research options, not execution buttons. Bringing a scanner into an engagement requires current scope, technique permission, a numerical traffic ceiling, and request-time enforcement.</p><div id="tool-list" class="tool-grid"></div><div class="note"><strong>Shannon trial</strong><p>Shannon is optional and requires its own runtime, model access, and an authorized target. This app does not install or launch it. Start with the synthetic lab workflow here; plan any Shannon test against a researcher-owned lab separately.</p></div></section>
+      <section id="about" class="view hidden"><div class="section-head"><div><span class="eyebrow">DESIGNED TO FAIL CLOSED</span><h3>About &amp; limits</h3></div></div><div class="about-grid"><article><h4>Where data lives</h4><p>All records are JSON files under the local <code>data/</code> folder. They are ignored by Git. No account, telemetry, or third-party service is needed.</p></article><article><h4>What runs</h4><p>The demo sends exactly two GET requests to a synthetic server started inside this process on 127.0.0.1. It never accepts a user-supplied target URL and never follows redirects.</p></article><article><h4>What is planning only</h4><p>Bounty and internal engagements can hold hypotheses but cannot run the demo or launch ZAP, Nuclei, ffuf, or Shannon. A pass in planning does not authorize live traffic.</p></article><article><h4>Evidence standard</h4><p>Lab evidence saves status, body length, and SHA-256 digest, without response bodies or credentials. A passing negative control proves the lab check worked; it is not a vulnerability finding.</p></article></div></section>
+      <footer>BOUNTY WORKBENCH <span>·</span> LOCAL BY DEFAULT <span>·</span> VERIFY BEFORE CLAIMING</footer>
+    </main>
+  </div>
+  <dialog id="engagement-dialog"><form id="engagement-form"><div class="dialog-head"><div><span class="eyebrow">NEW RECORD</span><h3>Create engagement</h3></div><button type="button" class="close" data-close>×</button></div><label>Name<input name="name" maxlength="100" required placeholder="e.g. My local API lab"></label><label>Type<select name="kind"><option value="owned_lab">Researcher-owned lab</option><option value="bounty">Bug bounty planning</option><option value="internal">Internal exercise planning</option></select></label><label>Authority / scope source<input name="authority" maxlength="500" required placeholder="e.g. My own synthetic lab on 127.0.0.1"></label><p class="form-note">Do not paste tokens, cookies, customer records, or private program text.</p><div class="form-actions"><button type="button" class="secondary" data-close>Cancel</button><button class="primary">Create</button></div></form></dialog>
+  <dialog id="plan-dialog"><form id="plan-form"><div class="dialog-head"><div><span class="eyebrow">TEST INTENT</span><h3>Write a hypothesis</h3></div><button type="button" class="close" data-close>×</button></div><label>Hypothesis<textarea name="hypothesis" maxlength="500" required placeholder="A member cannot access the admin route"></textarea></label><label>Potential attacker benefit<input name="impact" maxlength="300" required placeholder="e.g. Unauthorized access to admin data"></label><p class="form-note">For the demo, the check always uses the bundled member and admin routes.</p><div class="form-actions"><button type="button" class="secondary" data-close>Cancel</button><button class="primary">Save plan</button></div></form></dialog>
+</body>
+</html>
