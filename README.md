@@ -47,3 +47,5 @@ The tests exercise the app API, local-model adapter with a fake loopback model, 
 ## Project status
 
 This release supports local planning, source-backed prior-art search, symbolic modeling, optional local AI drafts, and bounded loopback checks. It does not include model weights, live bounty adapters, or scanner execution. The repository currently has no license; choose one before redistributing derivative builds.
+
+The dashboard's pre-run card is a manual reminder. It does not evaluate an engagement or authorize a run.
