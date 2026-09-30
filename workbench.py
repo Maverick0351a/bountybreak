@@ -309,10 +309,10 @@ class AppHandler(BaseHTTPRequestHandler):
                                  "plan": json.loads((example / "synthetic_role_chain_plan.json").read_text(encoding="utf-8"))})
             elif len(route) == 3 and route[:2] == ["api", "engagements"]:
                 self._json(200, self.server.store.get(route[2]))
-            elif route in ([], ["index.html"], ["app.js"], ["style.css"]):
+            elif route in ([], ["index.html"], ["app.js"], ["style.css"], ["brand.svg"]):
                 filename = "index.html" if not route else route[0]
                 mime = {"index.html": "text/html; charset=utf-8", "app.js": "text/javascript; charset=utf-8",
-                        "style.css": "text/css; charset=utf-8"}[filename]
+                        "style.css": "text/css; charset=utf-8", "brand.svg": "image/svg+xml"}[filename]
                 body = (STATIC / filename).read_bytes()
                 self._headers(200, mime, len(body))
                 self.wfile.write(body)
@@ -458,7 +458,7 @@ class AppServer(ThreadingHTTPServer):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local bounty research desk")
+    parser = argparse.ArgumentParser(description="ScopeRook local security research desk")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--open", action="store_true", help="open the app in the default browser")
@@ -473,7 +473,7 @@ def main():
     demo.daemon_threads = True
     threading.Thread(target=demo.serve_forever, daemon=True).start()
     app = AppServer(("127.0.0.1", args.port), Store(args.data_dir), demo.server_port, args.model_port)
-    print(f"Bounty Workbench: http://127.0.0.1:{app.server_port}/", flush=True)
+    print(f"ScopeRook: http://127.0.0.1:{app.server_port}/", flush=True)
     if args.open:
         threading.Timer(0.4, webbrowser.open, args=(f"http://127.0.0.1:{app.server_port}/",)).start()
     try:

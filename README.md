@@ -1,10 +1,10 @@
-# Bounty Workbench
+# ScopeRook
 
-A downloadable, red team themed research desk for authorized bug bounty work and researcher-owned labs. The app, exploit intelligence index, symbolic sandbox, and local-model adapter use **Python 3.11+ standard library only**. Model weights are separate, so the repository stays small.
+**Scope first. Proof always.** ScopeRook is a downloadable, red team themed research desk for authorized bug bounty work and researcher-owned labs. The name pairs the scope boundary with a rook: a deliberate move backed by evidence. The app, exploit intelligence index, symbolic sandbox, and local-model adapter use **Python 3.11+ standard library only**. Model weights are separate, so the repository stays small.
 
 ## Run
 
-On Windows, double-click `Start-Workbench.cmd`. On any supported system:
+On Windows, double-click `Start-ScopeRook.cmd`. On any supported system:
 
 ```sh
 python workbench.py --open

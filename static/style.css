@@ -118,4 +118,9 @@ main, .rail, nav, #detail { min-width: 0; }
 .intel-card a { display: inline-block; margin: 12px 14px 0 0; color: #ff8e95; overflow-wrap: anywhere; }
 .result-box { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 640px; overflow: auto; color: #e8dadd; font: 13px/1.55 Consolas, monospace; }
 .result-box:empty { display: none; }
+.brand { gap: 10px; }
+.brand .mark { display: block; flex: none; width: 43px; height: 43px; border: 0; background: transparent; border-radius: 13px; box-shadow: 0 0 28px #e0304030; }
+.brand strong { display: block; color: #fff4f5; font-size: 19px; letter-spacing: -.035em; }
+.brand small { color: #ff969d; font-size: 8px; letter-spacing: .12em; }
+@media (max-width: 900px) { .brand { display: flex; } .rail { gap: 13px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; } }

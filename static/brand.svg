@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ScopeRook mark">
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="#25171d" stroke="#b64956" stroke-width="2"/>
+  <path d="M8 20V12h8M48 12h8v8M8 44v8h8M48 52h8v-8" fill="none" stroke="#f0444f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M20 19h5v5h5v-5h4v5h5v-5h5v15l-4 4 2 7h3v5H19v-5h3l2-7-4-4z" fill="#f4e8ea"/>
+  <path d="M24 32h16M26 39h12" stroke="#25171d" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="30" r="2" fill="#f0444f"/>
+</svg>

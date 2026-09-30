@@ -1,6 +1,6 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Bounty Workbench
+title ScopeRook
 python workbench.py --open
 if errorlevel 1 pause
