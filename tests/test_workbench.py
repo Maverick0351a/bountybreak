@@ -72,6 +72,24 @@ class WorkbenchTests(unittest.TestCase):
             "name": "Wrong token", "kind": "owned_lab", "authority": "mine"}, {"X-CSRF-Token": "no"})
         self.assertEqual(status, 403)
 
+    def test_assets_are_saved_for_planning_without_target_traffic(self):
+        status, engagement = self.request("/api/engagements", "POST", {
+            "name": "Asset planning", "kind": "bounty", "authority": "Current public program brief",
+            "asset": "https://app.example.invalid/login"})
+        self.assertEqual(status, 201)
+        self.assertEqual(engagement["assets"][0]["value"], "https://app.example.invalid/login")
+        status, second = self.request(f"/api/engagements/{engagement['id']}/assets", "POST", {
+            "value": "*.example.invalid"})
+        self.assertEqual(status, 201)
+        self.assertEqual(second["value"], "*.example.invalid")
+        status, item = self.request(f"/api/engagements/{engagement['id']}")
+        self.assertEqual(status, 200)
+        self.assertEqual(len(item["assets"]), 2)
+        self.assertEqual(item["runs"], [])
+        status, _ = self.request(f"/api/engagements/{engagement['id']}/assets", "POST", {
+            "value": "https://user:secret@app.example.invalid/?token=abc"})
+        self.assertEqual(status, 400)
+
 
 if __name__ == "__main__":
     unittest.main()

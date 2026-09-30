@@ -44,6 +44,18 @@ def clean_text(value: object, limit: int) -> str:
     return value
 
 
+def clean_asset(value: object) -> str:
+    """Keep an exact planning label; never treat it as an execution target."""
+    asset = clean_text(value, 300)
+    if "?" in asset or "#" in asset:
+        raise ValueError("Asset must not contain a query or fragment")
+    if "://" in asset:
+        parsed = urlsplit(asset)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
+            raise ValueError("Use an HTTP(S) URL without credentials")
+    return asset
+
+
 def slug_for(name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:42].strip("-")
     return f"{base or 'engagement'}-{uuid.uuid4().hex[:8]}"
@@ -90,16 +102,32 @@ class Store:
             except FileNotFoundError:
                 raise ValueError("Engagement not found") from None
 
-    def create(self, name: str, kind: str, authority: str) -> dict:
+    def create(self, name: str, kind: str, authority: str, asset: str = "") -> dict:
         if kind not in ("bounty", "internal", "owned_lab"):
             raise ValueError("Invalid engagement kind")
         with self.lock:
             if len(self.list()) >= MAX_RECORDS:
                 raise ValueError("Engagement limit reached")
             item = {"id": slug_for(name), "name": name, "kind": kind,
-                    "authority": authority, "created_at": now(), "plans": [], "runs": []}
+                    "authority": authority, "created_at": now(), "assets": [], "plans": [], "runs": []}
+            if asset:
+                item["assets"].append({"value": clean_asset(asset), "added_at": now()})
             save_json(self._path(item["id"]), item)
             return item
+
+    def add_asset(self, ident: str, value: str) -> dict:
+        with self.lock:
+            item = self.get(ident)
+            assets = item.setdefault("assets", [])
+            if len(assets) >= MAX_RECORDS:
+                raise ValueError("Asset limit reached")
+            value = clean_asset(value)
+            if any(existing["value"].casefold() == value.casefold() for existing in assets):
+                raise ValueError("Asset already recorded")
+            asset = {"value": value, "added_at": now()}
+            assets.append(asset)
+            save_json(self._path(ident), item)
+            return asset
 
     def add_plan(self, ident: str, hypothesis: str, impact: str) -> dict:
         with self.lock:
@@ -239,8 +267,11 @@ class AppHandler(BaseHTTPRequestHandler):
             route = self._route()
             if route == ["api", "engagements"]:
                 item = self.server.store.create(clean_text(payload.get("name"), 100),
-                    payload.get("kind"), clean_text(payload.get("authority"), 500))
+                    payload.get("kind"), clean_text(payload.get("authority"), 500), payload.get("asset", ""))
                 self._json(201, item)
+            elif len(route) == 4 and route[:2] == ["api", "engagements"] and route[3] == "assets":
+                asset = self.server.store.add_asset(route[2], payload.get("value"))
+                self._json(201, asset)
             elif len(route) == 4 and route[:2] == ["api", "engagements"] and route[3] == "plans":
                 plan = self.server.store.add_plan(route[2], clean_text(payload.get("hypothesis"), 500),
                                                   clean_text(payload.get("impact"), 300))

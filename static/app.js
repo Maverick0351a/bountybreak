@@ -47,8 +47,9 @@ function renderCases() {
   for (const item of state.engagements) {
     const card = el("button", "case");
     card.type = "button";
+    const assetCount = (item.assets || []).length;
     card.append(el("span", "meta", item.kind.replace("_", " ")), el("h4", "", item.name),
-      el("p", "", item.authority), el("small", "", `${item.plans.length} plans · ${item.runs.length} runs`));
+      el("p", "", item.authority), el("small", "", `${assetCount} ${assetCount === 1 ? "asset" : "assets"} · ${item.plans.length} ${item.plans.length === 1 ? "plan" : "plans"} · ${item.runs.length} ${item.runs.length === 1 ? "run" : "runs"}`));
     card.addEventListener("click", () => openCase(item.id));
     list.append(card);
   }
@@ -88,11 +89,17 @@ async function openCase(id) {
   heading.append(el("span", "eyebrow", item.kind.replace("_", " ").toUpperCase()), el("h3", "", item.name),
     el("p", "", `Authority / scope source: ${item.authority}`));
   const actions = el("div", "detail-actions");
+  const assetButton = el("button", "secondary", "+ Add asset");
+  assetButton.addEventListener("click", () => $("#asset-dialog").showModal());
   const planButton = el("button", "primary", "+ Add plan");
   planButton.addEventListener("click", () => $("#plan-dialog").showModal());
-  actions.append(planButton);
+  actions.append(assetButton, planButton);
   top.append(heading, actions);
-  detail.append(top, el("h4", "panel-title", "Hypotheses & plans"));
+  detail.append(top, el("h4", "panel-title", "Recorded URLs & assets"));
+  const assets = el("div", "asset-list");
+  if (!(item.assets || []).length) assets.append(el("p", "intro", "No assets recorded yet. Add an exact URL or asset identifier for planning."));
+  for (const asset of item.assets || []) assets.append(el("div", "asset", asset.value));
+  detail.append(assets, el("h4", "panel-title", "Hypotheses & plans"));
   if (!item.plans.length) detail.append(el("p", "intro", "No plan yet. Start with one testable hypothesis and a concrete impact."));
   for (const plan of item.plans) {
     const box = el("article", "plan");
@@ -150,6 +157,16 @@ $("#plan-form").addEventListener("submit", async (event) => {
     await api(`/api/engagements/${state.selected.id}/plans`, "POST", Object.fromEntries(new FormData(form)));
     form.reset(); $("#plan-dialog").close(); await refresh(); await openCase(state.selected.id);
     flash("Hypothesis saved. The local demo is ready for owned-lab engagements.");
+  } catch (error) { flash(error.message); }
+});
+
+$("#asset-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  try {
+    await api(`/api/engagements/${state.selected.id}/assets`, "POST", Object.fromEntries(new FormData(form)));
+    form.reset(); $("#asset-dialog").close(); await refresh(); await openCase(state.selected.id);
+    flash("Asset recorded for planning. No target traffic was sent.");
   } catch (error) { flash(error.message); }
 });
 
