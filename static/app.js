@@ -1,8 +1,9 @@
 "use strict";
 
 const $ = (selector) => document.querySelector(selector);
-const state = { engagements: [], tools: [], csrf: "", selected: null };
-const titles = { overview: "Overview", engagements: "Engagements", tools: "Tool catalog", about: "About & limits" };
+const state = { engagements: [], tools: [], csrf: "", selected: null, runPlanId: null };
+const titles = { overview: "Overview", engagements: "Engagements", intelligence: "Exploit intelligence",
+  sandbox: "Logic sandbox", assistant: "AI assistant", tools: "Tool catalog", about: "About & limits" };
 
 function el(tag, className, content) {
   const node = document.createElement(tag);
@@ -70,12 +71,112 @@ function renderTools() {
   }
 }
 
+function renderAiEngagements() {
+  const select = $("#ai-engagement");
+  select.replaceChildren();
+  const none = el("option", "", "No engagement"); none.value = ""; select.append(none);
+  for (const item of state.engagements) {
+    const option = el("option", "", `${item.name} (${item.kind.replace("_", " ")})`);
+    option.value = item.id;
+    select.append(option);
+  }
+  $("#model-port").textContent = String(state.ai_port || 1234);
+}
+
+function localAssets(item) {
+  return (item.assets || []).map((entry) => entry.value)
+    .filter((value) => /^https?:\/\/127\.0\.0\.1:\d+\/?$/i.test(value));
+}
+
+function showLocalRun(planId) {
+  state.runPlanId = planId;
+  const select = $("#local-asset");
+  select.replaceChildren();
+  for (const value of localAssets(state.selected)) {
+    const option = el("option", "", value);
+    option.value = value;
+    select.append(option);
+  }
+  $("#local-run-dialog").showModal();
+}
+
 async function refresh() {
   const data = await api("/api/state");
   Object.assign(state, data);
   renderCases();
   renderTools();
+  renderAiEngagements();
 }
+
+$("#intel-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const query = new FormData(event.currentTarget).get("query");
+  const output = $("#intel-results");
+  output.replaceChildren(el("p", "intro", "Searching local index…"));
+  try {
+    const data = await api("/api/intelligence/search", "POST", { query });
+    output.replaceChildren();
+    if (!data.records.length) output.append(el("p", "intro", "No matching records in the bundled index."));
+    for (const record of data.records) {
+      const box = el("article", "intel-card");
+      box.append(el("span", "meta", `${record.cve_id} · ${record.status} · ${record.confidence} confidence`),
+        el("h4", "", record.title), el("p", "", `Product: ${record.product}`),
+        el("p", "", `Prerequisites: ${record.prerequisites}`),
+        el("p", "", `Validation: ${record.validation_notes}`),
+        el("small", "", `Last verified: ${record.last_verified}`));
+      for (const source of record.sources) {
+        const link = el("a", "", `${source.publisher} ↗`);
+        link.href = source.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+        box.append(link);
+      }
+      output.append(box);
+    }
+  } catch (error) { output.replaceChildren(el("p", "intro", error.message)); }
+});
+
+$("#load-sandbox-example").addEventListener("click", async () => {
+  try {
+    const example = await api("/api/sandbox/example");
+    $("#sandbox-world").value = JSON.stringify(example.world, null, 2);
+    $("#sandbox-plan").value = JSON.stringify(example.plan, null, 2);
+    $("#sandbox-result").textContent = "Synthetic example loaded. Run the simulation to inspect both cases.";
+  } catch (error) { flash(error.message); }
+});
+
+$("#sandbox-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const result = $("#sandbox-result");
+  try {
+    const world = JSON.parse(form.elements.world.value);
+    const plan = JSON.parse(form.elements.plan.value);
+    const data = await api("/api/sandbox/simulate", "POST", { world, plan, explore: form.elements.explore.checked });
+    result.textContent = JSON.stringify(data, null, 2);
+  } catch (error) { result.textContent = error.message; }
+});
+
+$("#ai-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button.primary");
+  const result = $("#ai-result");
+  button.disabled = true; result.textContent = "Waiting for the local model…";
+  try {
+    const payload = Object.fromEntries(new FormData(form));
+    if (form.elements.include_sandbox.checked) {
+      if (!$("#sandbox-world").value || !$("#sandbox-plan").value) {
+        throw new Error("Load or enter a Logic sandbox world and plan first.");
+      }
+      payload.world = JSON.parse($("#sandbox-world").value);
+      payload.plan = JSON.parse($("#sandbox-plan").value);
+      delete payload.include_sandbox;
+    }
+    const answer = await api("/api/ai/draft", "POST", payload);
+    const sources = answer.prior_art.flatMap((item) => item.sources.map((source) => source.url));
+    result.textContent = `${answer.draft}\n\nClassification: unverified · model: ${answer.model}${answer.sandbox_result ? ` · sandbox: ${answer.sandbox_result}` : ""}\nPrior-art sources:\n${sources.join("\n") || "No matching bundled record"}`;
+  } catch (error) { result.textContent = error.message; }
+  finally { button.disabled = false; }
+});
 
 async function openCase(id) {
   const item = await api(`/api/engagements/${id}`);
@@ -106,9 +207,18 @@ async function openCase(id) {
     box.append(el("small", "", `PLAN ${plan.id} · ${plan.status.toUpperCase()}`),
       el("p", "", plan.hypothesis), el("small", "", `Potential impact: ${plan.impact}`));
     if (item.kind === "owned_lab") {
+      const planActions = el("div", "plan-actions");
       const run = el("button", "secondary", "Run bundled lab check →");
       run.addEventListener("click", () => runDemo(item.id, plan.id, run));
-      box.append(el("br"), run);
+      planActions.append(run);
+      if (localAssets(item).length) {
+        const localRun = el("button", "primary", "Check a local URL →");
+        localRun.addEventListener("click", () => showLocalRun(plan.id));
+        planActions.append(localRun);
+      } else {
+        box.append(el("small", "plan-hint", "Add a recorded http://127.0.0.1:PORT origin to check your own lab."));
+      }
+      box.append(planActions);
     }
     detail.append(box);
   }
@@ -119,8 +229,14 @@ async function openCase(id) {
     box.append(el("small", "", `${run.created_at} · ${run.environment}`), el("p", "", run.finding));
     const row = el("div", "run-grid");
     row.append(el("span", "pill", `${run.requests_sent}/${run.request_budget} requests`),
-      el("span", "pill", `Negative control: ${run.negative_control_passed ? "passed" : "failed"}`));
-    for (const observation of run.observations) row.append(el("span", "pill", `${observation.path}: HTTP ${observation.status} · SHA-256 ${observation.body_sha256.slice(0, 12)}…`));
+      el("span", "pill", `Negative control: ${run.negative_control_passed === null ? "not reached" : run.negative_control_passed ? "passed" : "failed"}`));
+    if (run.target_origin) row.append(el("span", "pill", run.target_origin));
+    if (run.stopped_reason) row.append(el("span", "pill", `Stopped: ${run.stopped_reason}`));
+    for (const observation of run.observations) {
+      const label = observation.error ? `${observation.path}: ${observation.error}`
+        : `${observation.path}: HTTP ${observation.status}${observation.body_sha256 ? ` · SHA-256 ${observation.body_sha256.slice(0, 12)}…` : ""}`;
+      row.append(el("span", "pill", label));
+    }
     box.append(row);
     detail.append(box);
   }
@@ -135,6 +251,23 @@ async function runDemo(id, planId, button) {
     flash("Two-request lab check complete. Evidence saved locally.");
   } catch (error) { flash(error.message); button.disabled = false; }
 }
+
+$("#local-run-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button.primary");
+  const data = Object.fromEntries(new FormData(form));
+  data.plan_id = state.runPlanId;
+  data.expected_control_status = Number(data.expected_control_status);
+  data.owned_lab_attested = form.elements.owned_lab_attested.checked;
+  button.disabled = true;
+  try {
+    const run = await api(`/api/engagements/${state.selected.id}/local-run`, "POST", data);
+    form.reset(); $("#local-run-dialog").close(); await refresh(); await openCase(state.selected.id);
+    flash(run.status === "stopped" ? `Local check stopped: ${run.stopped_reason}` : "Bounded local check complete. Evidence saved locally.");
+  } catch (error) { flash(error.message); }
+  finally { button.disabled = false; }
+});
 
 document.querySelectorAll(".nav").forEach((button) => button.addEventListener("click", () => show(button.dataset.view)));
 $("#new-from-overview").addEventListener("click", () => $("#engagement-dialog").showModal());
@@ -156,7 +289,7 @@ $("#plan-form").addEventListener("submit", async (event) => {
   try {
     await api(`/api/engagements/${state.selected.id}/plans`, "POST", Object.fromEntries(new FormData(form)));
     form.reset(); $("#plan-dialog").close(); await refresh(); await openCase(state.selected.id);
-    flash("Hypothesis saved. The local demo is ready for owned-lab engagements.");
+    flash("Hypothesis saved. Owned-lab checks are available when their target is ready.");
   } catch (error) { flash(error.message); }
 });
 

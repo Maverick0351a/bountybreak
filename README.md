@@ -1,39 +1,40 @@
 # Bounty Workbench
 
-A red team themed local web desk for planning authorized security research and checking one complete workflow in a synthetic lab. The core uses only the Python standard library. There is no account, cloud service, package installation, scanner download, or Docker requirement.
+A downloadable, red team themed research desk for authorized bug bounty work and researcher-owned labs. The app, exploit intelligence index, symbolic sandbox, and local-model adapter use **Python 3.11+ standard library only**. Model weights are separate, so the repository stays small.
 
 ## Run
 
-Requires Python 3.11 or newer.
+On Windows, double-click `Start-Workbench.cmd`. On any supported system:
 
 ```sh
-python workbench.py
+python workbench.py --open
 ```
 
-Open `http://127.0.0.1:8766/`. Data is saved under `data/` and ignored by Git. To change the location or port:
+The app binds to `http://127.0.0.1:8766/`. Close the launcher window or press Ctrl+C to stop it. Engagement JSON and the generated SQLite index live under `data/`, which Git ignores. To choose another data location, app port, or local model port:
 
 ```sh
-python workbench.py --data-dir /private/path --port 8767
+python workbench.py --data-dir /private/path --port 8767 --model-port 1234
 ```
 
-## Try the complete workflow
+No installation, cloud account, Docker runtime, or scanner download is required. The AI feature requires a separate **OpenAI-compatible local model server** at `127.0.0.1:<model-port>` with `/v1/models` and `/v1/chat/completions`. Start your own server and load a model before using **AI assistant**. There is no cloud fallback, API key collection, automatic model download, or background prompt transfer. This is an API-compatible local model integration; it is not a ChatGPT plugin or OpenAI service integration.
 
-1. Create a **Researcher-owned lab** engagement. Use “Bundled synthetic lab” as its authority source. You may record an exact URL or asset identifier now or add more later.
-2. Add a hypothesis such as “a member cannot access the admin route” and an impact statement.
-3. Click **Run bundled lab check**. The app makes exactly two fixed GET requests to its own temporary loopback lab: `/api/me` and `/api/admin`.
-4. Review the saved statuses, response lengths, SHA-256 digests, and negative control. The expected result is HTTP 200 followed by HTTP 403. It demonstrates the workflow, **not a vulnerability**.
+## Research workflow
 
-The lab server starts on a random loopback port inside the app process and stops with the app. User input cannot change its origin, route, method, request count, or redirect behavior.
+1. Create an engagement and record the authority source and optional URL or asset. Bounty and internal entries are planning records.
+2. Use **Exploit intelligence** to search the four bundled public-source records by product, CVE, or mechanism. Check the linked primary source and affected version before relying on a result. The generated SQLite FTS index refreshes when the bundled JSON changes.
+3. Use **Logic sandbox** to simulate a hypothesis and negative control offline. Load the synthetic example to see the format. `intelligence/logic_sandbox.py` accepts bounded JSON state transitions, never code or payloads. Its result is supported or unsupported **in the model**.
+4. Optionally ask **AI assistant** for a hypothesis draft. It sends the entered question, up to two matching prior-art records, and an optional selected engagement name/assets to the loopback model. You can include the current Logic sandbox world and plan; code simulates them first, then sends a concise result and negative-control outcome. Review the unverified answer and save a plan yourself.
+5. For a researcher-owned lab, run the bundled two-request demo. To check your own separate loopback service, record its exact `http://127.0.0.1:<port>` origin, start the service, and use **Check a local URL** with two exact paths and a negative control. `examples/local_lab.py` provides a synthetic server on port 8866.
 
-## Scope boundary
+The local check makes at most two GET requests, waits at least 0.5 seconds between them, applies a 3-second timeout and 64 KiB response ceiling, and stops on redirects, throttling, server errors, or failed primary responses. It saves statuses, lengths, hashes, and stop reasons without response bodies. A passing control means the check worked; it does not establish a vulnerability.
 
-Bug bounty and internal engagement records are planning only. The app can store URLs and asset identifiers, but does not contact them, accept them as execution targets, run ZAP/Nuclei/ffuf/Shannon, submit reports, or treat a saved plan as authorization. The tool catalog links to official projects for selection and review. Running one of them against a live target would require a separate adapter that enforces current scope, technique permission, identities, request limits, and stop conditions at request time.
+## Boundaries
 
-The web server binds to `127.0.0.1`, requires a matching Host and Origin plus a session CSRF token for changes, and has no remote access mode. Do not put credentials, session cookies, customer records, or private program text into records. The app stores user-entered fields locally without encryption. Keep the data directory private and out of published commits.
+The web server requires the exact loopback Host, matching Origin, and a CSRF token for changes. It has no remote access mode. The AI adapter uses a fixed loopback IP and no proxy or cloud fallback. Treat locally hosted model servers as trusted components and keep them private. Do not put credentials, customer data, private program text, or live session material in app records or prompts.
 
-## Optional Shannon path
+The app does not contact bounty targets, launch ZAP/Nuclei/ffuf/Shannon, or submit reports. The tool catalog is for choosing and reviewing tools. A live adapter would need current program scope, technique permission, identities, numeric traffic limits, and request-time enforcement. Saved URLs, model drafts, database records, and passing planning gates are not authorization.
 
-[Shannon](https://github.com/KeygraphHQ/shannon) is an independent tool. This release records lab plans and evidence but does not install or launch Shannon. A Shannon integration should first use a researcher-owned lab, then add an enforceable per-request scope and budget layer before any live bounty use. Shannon and its runtime are not dependencies of this app.
+The public seed index contains four records backed by direct primary sources at the time of this release. Two incomplete records from the private research index were withheld. Records are public prior art, not live findings; source URLs, version applicability, and status can change.
 
 ## Test
 
@@ -41,8 +42,8 @@ The web server binds to `127.0.0.1`, requires a matching Host and Origin plus a 
 python -m unittest discover -s tests -v
 ```
 
-The tests cover the end-to-end local run, asset persistence without target traffic, the negative control, and the live-engagement/Host/Origin/CSRF boundary.
+The tests exercise the app API, local-model adapter with a fake loopback model, intelligence search, sandbox hypothesis/control, owned-lab request budget, redirect stop, and Host/Origin/CSRF boundary.
 
 ## Project status
 
-This is a first working release: local engagement records, hypotheses, a tool catalog, and a bounded synthetic check with sanitized evidence. Public bounty scope import, tool adapters, and Shannon execution are future work. Security findings still require independent reproduction and current program authorization.
+This release supports local planning, source-backed prior-art search, symbolic modeling, optional local AI drafts, and bounded loopback checks. It does not include model weights, live bounty adapters, or scanner execution. The repository currently has no license; choose one before redistributing derivative builds.

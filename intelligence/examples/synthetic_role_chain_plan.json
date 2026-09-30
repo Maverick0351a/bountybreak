@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "world_id": "synthetic-role-chain",
+  "plan_id": "viewer-to-admin-read",
+  "steps": ["self_grant_admin", "read_admin_record"],
+  "expect_goal": {
+    "suspected_weakness": true,
+    "secure_control": false
+  }
+}

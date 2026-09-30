@@ -12,16 +12,21 @@ import secrets
 import threading
 import time
 import uuid
+import webbrowser
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
+
+from ai_local import draft as local_ai_draft
+from intelligence import exploit_db, logic_sandbox
 
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
 MAX_BODY = 16_384
 MAX_RECORDS = 200
+MAX_RESPONSE = 65_536
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 TOOLS = [
     {"name": "OWASP ZAP", "role": "Proxy and application testing", "mode": "manual", "link": "https://www.zaproxy.org/"},
@@ -54,6 +59,29 @@ def clean_asset(value: object) -> str:
         if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
             raise ValueError("Use an HTTP(S) URL without credentials")
     return asset
+
+
+def local_origin(value: object, app_port: int) -> tuple[str, int, str]:
+    """Allow only an exact loopback IP origin with a nonprivileged explicit port."""
+    asset = clean_asset(value)
+    parsed = urlsplit(asset)
+    if parsed.scheme not in ("http", "https") or parsed.hostname != "127.0.0.1":
+        raise ValueError("Local checks require http(s)://127.0.0.1:<port>")
+    port = parsed.port
+    if port is None or not 1024 <= port <= 65535 or port == app_port:
+        raise ValueError("Choose an explicit lab port from 1024 to 65535, outside this app")
+    if parsed.netloc != f"127.0.0.1:{port}" or parsed.path not in ("", "/"):
+        raise ValueError("Use an exact loopback origin without a path or credentials")
+    return parsed.scheme, port, f"{parsed.scheme}://127.0.0.1:{port}"
+
+
+def clean_probe_path(value: object) -> str:
+    path = clean_text(value, 256)
+    if (not path.startswith("/") or path.startswith("//")
+            or any(char in path for char in ("?", "#", "\\", "%"))
+            or any(not 33 <= ord(char) <= 126 for char in path)):
+        raise ValueError("Use a relative path beginning with /, without query or fragment")
+    return path
 
 
 def slug_for(name: str) -> str:
@@ -172,29 +200,67 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def demo_check(port: int) -> dict:
-    """Two fixed requests to the bundled loopback lab. No user URL or redirect is used."""
-    results = []
-    for path in ("/api/me", "/api/admin"):
-        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+def bounded_check(scheme: str, port: int, primary_path: str, control_path: str,
+                  expected_control_status: int) -> dict:
+    """Make at most two same-origin requests, without DNS or redirect following."""
+    observations = []
+    sent = 0
+    stopped_reason = None
+    started = time.monotonic()
+    for index, path in enumerate((primary_path, control_path)):
+        connection_type = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+        connection = connection_type("127.0.0.1", port, timeout=3)
         try:
-            connection.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
+            connection.request("GET", path, headers={"Host": f"127.0.0.1:{port}", "Accept": "*/*"})
+            sent += 1
             response = connection.getresponse()
-            body = response.read(4097)
-            if len(body) > 4096 or response.status in (429,) or response.status >= 500:
-                raise RuntimeError("Lab returned an error or oversized response; run stopped")
+            observation = {"path": path, "status": response.status}
+            observations.append(observation)
+            if response.status == 429 or response.status >= 500:
+                stopped_reason = "Lab throttled or returned a server error"
+                break
             if 300 <= response.status < 400:
-                raise RuntimeError("Lab redirected; run stopped")
-            results.append({"path": path, "status": response.status,
-                            "body_bytes": len(body), "body_sha256": hashlib.sha256(body).hexdigest()})
+                stopped_reason = "Lab redirected; redirect was not followed"
+                break
+            body = response.read(MAX_RESPONSE + 1)
+            observation["body_bytes"] = len(body)
+            if len(body) > MAX_RESPONSE:
+                observation["truncated"] = True
+                stopped_reason = "Response exceeded the 64 KiB ceiling"
+                break
+            observation["body_sha256"] = hashlib.sha256(body).hexdigest()
+            if index == 0 and not 200 <= response.status < 300:
+                stopped_reason = "Primary request did not return 2xx"
+                break
+        except (OSError, http.client.HTTPException):
+            if observations and observations[-1]["path"] == path:
+                observations[-1]["error"] = "Connection failed after response"
+            else:
+                observations.append({"path": path, "error": "Connection failed"})
+            stopped_reason = "Connection failed; no more requests were sent"
+            break
         finally:
             connection.close()
-        if path == "/api/me":
+        if index == 0:
             time.sleep(0.5)
-    return {"environment": "bundled researcher-owned loopback lab", "request_budget": 2,
-            "requests_sent": len(results), "observations": results,
-            "negative_control_passed": results[1]["status"] == 403,
-            "finding": "No vulnerability demonstrated", "classification": "observed"}
+    completed = stopped_reason is None and len(observations) == 2
+    control_passed = observations[1]["status"] == expected_control_status if completed else None
+    primary_passed = 200 <= observations[0]["status"] < 300 if completed else None
+    return {"target_origin": f"{scheme}://127.0.0.1:{port}", "method": "GET",
+            "request_budget": 2, "requests_sent": sent, "per_request_timeout_seconds": 3,
+            "max_response_bytes": MAX_RESPONSE, "minimum_interval_seconds": 0.5,
+            "duration_seconds": round(time.monotonic() - started, 3),
+            "expected_control_status": expected_control_status, "observations": observations,
+            "primary_passed": primary_passed, "negative_control_passed": control_passed,
+            "status": "completed" if completed else "stopped", "stopped_reason": stopped_reason,
+            "finding": "Expected behavior observed" if completed and primary_passed and control_passed
+                       else "Check needs review; no vulnerability claimed", "classification": "observed"}
+
+
+def demo_check(port: int) -> dict:
+    """Two fixed requests to the bundled loopback lab."""
+    return {"environment": "bundled researcher-owned loopback lab",
+            **bounded_check("http", port, "/api/me", "/api/admin", 403)}
 
 
 class AppHandler(BaseHTTPRequestHandler):
@@ -235,7 +301,12 @@ class AppHandler(BaseHTTPRequestHandler):
             route = self._route()
             if route == ["api", "state"]:
                 self._json(200, {"engagements": self.server.store.list(), "tools": TOOLS,
-                                 "demo_ready": True, "csrf": self.server.csrf})
+                                 "demo_ready": True, "csrf": self.server.csrf,
+                                 "ai_port": self.server.model_port})
+            elif route == ["api", "sandbox", "example"]:
+                example = ROOT / "intelligence" / "examples"
+                self._json(200, {"world": json.loads((example / "synthetic_role_chain_world.json").read_text(encoding="utf-8")),
+                                 "plan": json.loads((example / "synthetic_role_chain_plan.json").read_text(encoding="utf-8"))})
             elif len(route) == 3 and route[:2] == ["api", "engagements"]:
                 self._json(200, self.server.store.get(route[2]))
             elif route in ([], ["index.html"], ["app.js"], ["style.css"]):
@@ -265,7 +336,49 @@ class AppHandler(BaseHTTPRequestHandler):
             if not isinstance(payload, dict):
                 raise ValueError("Expected JSON object")
             route = self._route()
-            if route == ["api", "engagements"]:
+            if route == ["api", "intelligence", "search"]:
+                query = clean_text(payload.get("query"), 120)
+                self._json(200, {"records": exploit_db.search(query, limit=8),
+                                 "interpretation": "Prior art only. Re-check current primary sources and scope."})
+            elif route == ["api", "sandbox", "simulate"]:
+                world, plan = payload.get("world"), payload.get("plan")
+                if not isinstance(world, dict) or not isinstance(plan, dict):
+                    raise ValueError("World and plan must be JSON objects")
+                result = logic_sandbox.simulate(world, plan)
+                if payload.get("explore") is True:
+                    result["exploration"] = logic_sandbox.explore(world)
+                self._json(200, result)
+            elif route == ["api", "ai", "draft"]:
+                question = clean_text(payload.get("question"), 800)
+                query = clean_text(payload.get("prior_art_query"), 120)
+                records = exploit_db.search(query, limit=2)
+                context = exploit_db.model_context(records)[:5500]
+                sandbox_result = None
+                if "world" in payload or "plan" in payload:
+                    world, plan = payload.get("world"), payload.get("plan")
+                    if not isinstance(world, dict) or not isinstance(plan, dict):
+                        raise ValueError("AI sandbox context requires world and plan JSON objects")
+                    sandbox_result = logic_sandbox.simulate(world, plan)
+                    concise = {"result": sandbox_result["result"], "interpretation": sandbox_result["interpretation"],
+                               "cases": [{"case": case["case"], "kind": case["kind"], "goal": case["goal"],
+                                          "matches_expectation": case["matches_expectation"],
+                                          "blocked": [step for step in case["trace"] if step["result"] != "applied"]}
+                                         for case in sandbox_result["cases"]]}
+                    context += "\nSymbolic sandbox result (model only; no observed target behavior):\n"
+                    context += json.dumps(concise, ensure_ascii=False)[:1800]
+                ident = payload.get("engagement_id")
+                if ident:
+                    item = self.server.store.get(clean_text(ident, 64))
+                    assets = ", ".join(entry["value"] for entry in item.get("assets", [])[:3])
+                    context += f"\nEngagement planning record: {item['name']} ({item['kind']}); assets: {assets}. "
+                    context += "This record does not grant target access.\n"
+                result = local_ai_draft(self.server.model_port, question, context[:8000])
+                if sandbox_result:
+                    result["sandbox_result"] = sandbox_result["result"]
+                result["prior_art"] = [{"cve_id": record["cve_id"], "sources": record["sources"]}
+                                       for record in records]
+                self._json(200, result)
+            elif route == ["api", "engagements"]:
                 item = self.server.store.create(clean_text(payload.get("name"), 100),
                     payload.get("kind"), clean_text(payload.get("authority"), 500), payload.get("asset", ""))
                 self._json(201, item)
@@ -293,21 +406,53 @@ class AppHandler(BaseHTTPRequestHandler):
                 finally:
                     self.server.run_lock.release()
                 self._json(201, run)
+            elif len(route) == 4 and route[:2] == ["api", "engagements"] and route[3] == "local-run":
+                ident = route[2]
+                item = self.server.store.get(ident)
+                if item["kind"] != "owned_lab" or payload.get("owned_lab_attested") is not True:
+                    raise ValueError("Confirm this is a researcher-owned local lab")
+                plan_id = clean_text(payload.get("plan_id"), 12)
+                if not any(plan["id"] == plan_id for plan in item["plans"]):
+                    raise ValueError("Plan not found")
+                asset = clean_text(payload.get("asset"), 300)
+                if not any(entry["value"] == asset for entry in item.get("assets", [])):
+                    raise ValueError("Choose a recorded asset")
+                scheme, port, origin = local_origin(asset, self.server.server_port)
+                primary = clean_probe_path(payload.get("primary_path"))
+                control = clean_probe_path(payload.get("control_path"))
+                if primary == control:
+                    raise ValueError("Primary and control paths must differ")
+                expected = payload.get("expected_control_status")
+                if type(expected) is not int or expected not in (401, 403, 404):
+                    raise ValueError("Control status must be 401, 403, or 404")
+                if len(item["runs"]) >= MAX_RECORDS:
+                    raise ValueError("Run limit reached")
+                if not self.server.run_lock.acquire(blocking=False):
+                    self._json(409, {"error": "Another local run is active"})
+                    return
+                try:
+                    evidence = {"environment": "attested researcher-owned loopback lab",
+                                "owner_attested": True, **bounded_check(scheme, port, primary, control, expected)}
+                    run = self.server.store.add_run(ident, plan_id, evidence)
+                finally:
+                    self.server.run_lock.release()
+                self._json(201, run)
             else:
                 self._json(404, {"error": "Not found"})
         except (ValueError, json.JSONDecodeError) as exc:
             self._json(400, {"error": str(exc)})
         except (OSError, RuntimeError, http.client.HTTPException):
-            self._json(503, {"error": "Demo lab failed or stopped. No result was saved."})
+            self._json(503, {"error": "Local check failed before evidence could be saved"})
 
 
 class AppServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, store: Store, demo_port: int):
+    def __init__(self, address, store: Store, demo_port: int, model_port: int = 1234):
         super().__init__(address, AppHandler)
         self.store = store
         self.demo_port = demo_port
+        self.model_port = model_port
         self.csrf = secrets.token_urlsafe(32)
         self.run_lock = threading.Lock()
 
@@ -316,14 +461,21 @@ def main():
     parser = argparse.ArgumentParser(description="Local bounty research desk")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
+    parser.add_argument("--open", action="store_true", help="open the app in the default browser")
+    parser.add_argument("--model-port", type=int, default=1234,
+                        help="port of an optional OpenAI-compatible local model on 127.0.0.1")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error("port must be 1024–65535")
+    if not 1024 <= args.model_port <= 65535 or args.model_port == args.port:
+        parser.error("model port must be 1024–65535 and differ from the app port")
     demo = ThreadingHTTPServer(("127.0.0.1", 0), DemoHandler)
     demo.daemon_threads = True
     threading.Thread(target=demo.serve_forever, daemon=True).start()
-    app = AppServer(("127.0.0.1", args.port), Store(args.data_dir), demo.server_port)
+    app = AppServer(("127.0.0.1", args.port), Store(args.data_dir), demo.server_port, args.model_port)
     print(f"Bounty Workbench: http://127.0.0.1:{app.server_port}/", flush=True)
+    if args.open:
+        threading.Timer(0.4, webbrowser.open, args=(f"http://127.0.0.1:{app.server_port}/",)).start()
     try:
         app.serve_forever()
     except KeyboardInterrupt:

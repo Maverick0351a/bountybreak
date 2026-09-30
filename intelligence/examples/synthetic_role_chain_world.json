@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "world_id": "synthetic-role-chain",
+  "initial_state": {
+    "user.role": "viewer",
+    "role_grant_enforced": null,
+    "admin_record_read": false
+  },
+  "actions": [
+    {
+      "id": "self_grant_admin",
+      "requires": {
+        "all": [
+          {"fact": "user.role", "equals": "viewer"},
+          {"fact": "role_grant_enforced", "equals": false}
+        ]
+      },
+      "sets": {"user.role": "admin"}
+    },
+    {
+      "id": "read_admin_record",
+      "requires": {"fact": "user.role", "equals": "admin"},
+      "sets": {"admin_record_read": true}
+    }
+  ],
+  "goal": {"fact": "admin_record_read", "equals": true},
+  "cases": [
+    {
+      "id": "suspected_weakness",
+      "kind": "hypothesis",
+      "overrides": {"role_grant_enforced": false}
+    },
+    {
+      "id": "secure_control",
+      "kind": "negative_control",
+      "overrides": {"role_grant_enforced": true}
+    }
+  ],
+  "assumptions": [
+    "Synthetic example only: a viewer can request a role grant when enforcement is absent.",
+    "The model treats a successful admin-record read as the outcome; no real service or customer data is involved."
+  ]
+}

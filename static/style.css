@@ -96,4 +96,26 @@ dialog::backdrop { background: #09070bd9; }
 label { color: #e0c8ce; }
 input, select, textarea { background: #111116; color: #fff5f5; border-color: #62444f; }
 .form-note { color: #ae919a; }
+.checkline { display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+.checkline input { width: auto; flex: none; margin: 1px 0 0; accent-color: var(--red); }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.plan-hint { display: block; margin-top: 12px; color: #a98b95; font-size: 11px; }
+/* Let the scrollable navigation shrink inside a narrow one-column shell. */
+main, .rail, nav, #detail { min-width: 0; }
+@media (max-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr); } nav { max-width: 100%; } }
+.pill, .plan, .run { overflow-wrap: anywhere; }
+.research-form { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin: 20px 0; }
+.research-form label { flex: 1 1 280px; }
+.research-form.stacked { display: block; max-width: 900px; }
+.research-form.stacked label { display: block; margin: 16px 0; }
+.research-form textarea { min-height: 110px; font: 13px Consolas, monospace; }
+#sandbox-world { min-height: 270px; }
+#sandbox-plan { min-height: 150px; }
+.research-results { display: grid; gap: 14px; }
+.intel-card, .result-box { border: 1px solid #4b343e; border-radius: 10px; background: #1d1a21; padding: 18px; }
+.intel-card h4 { margin: 10px 0; }
+.intel-card p { color: #cbb4bc; }
+.intel-card a { display: inline-block; margin: 12px 14px 0 0; color: #ff8e95; overflow-wrap: anywhere; }
+.result-box { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 640px; overflow: auto; color: #e8dadd; font: 13px/1.55 Consolas, monospace; }
+.result-box:empty { display: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; } }
