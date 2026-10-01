@@ -139,20 +139,42 @@ $("#load-sandbox-example").addEventListener("click", async () => {
     const example = await api("/api/sandbox/example");
     $("#sandbox-world").value = JSON.stringify(example.world, null, 2);
     $("#sandbox-plan").value = JSON.stringify(example.plan, null, 2);
-    $("#sandbox-result").textContent = "Synthetic example loaded. Run the simulation to inspect both cases.";
+    $("#sandbox-summary").replaceChildren(el("p", "intro", "Synthetic example loaded. Run the simulation to inspect both cases."));
+    $("#sandbox-raw").hidden = true;
   } catch (error) { flash(error.message); }
 });
+
+function renderSandboxSummary(data) {
+  const summary = $("#sandbox-summary");
+  const verdict = data.result === "supported_in_model" ? "Supported in this model" : "Not supported in this model";
+  summary.replaceChildren(el("div", "sandbox-verdict", verdict));
+  const cases = el("div", "sandbox-case-grid");
+  for (const item of data.cases || []) {
+    const card = el("article", "sandbox-case");
+    const title = item.kind === "negative_control" ? "Negative control" : "Hypothesis";
+    const blocked = (item.trace || []).filter((step) => step.result !== "applied").length;
+    card.append(el("span", "eyebrow", title),
+      el("strong", "", item.goal ? "Goal reached" : "Goal blocked"),
+      el("p", "", `${item.case} · ${item.matches_expectation ? "Matched" : "Did not match"} expected outcome · ${blocked} blocked ${blocked === 1 ? "step" : "steps"}`));
+    cases.append(card);
+  }
+  summary.append(cases, el("p", "sandbox-boundary", "Symbolic result only. No real target was tested."));
+}
 
 $("#sandbox-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
-  const result = $("#sandbox-result");
   try {
     const world = JSON.parse(form.elements.world.value);
     const plan = JSON.parse(form.elements.plan.value);
     const data = await api("/api/sandbox/simulate", "POST", { world, plan, explore: form.elements.explore.checked });
-    result.textContent = JSON.stringify(data, null, 2);
-  } catch (error) { result.textContent = error.message; }
+    renderSandboxSummary(data);
+    $("#sandbox-result").textContent = JSON.stringify(data, null, 2);
+    $("#sandbox-raw").hidden = false;
+  } catch (error) {
+    $("#sandbox-summary").replaceChildren(el("p", "intro", error.message));
+    $("#sandbox-raw").hidden = true;
+  }
 });
 
 $("#ai-form").addEventListener("submit", async (event) => {
@@ -216,7 +238,7 @@ async function openCase(id) {
         localRun.addEventListener("click", () => showLocalRun(plan.id));
         planActions.append(localRun);
       } else {
-        box.append(el("small", "plan-hint", "Add a recorded http://127.0.0.1:PORT origin to check your own lab."));
+        box.append(el("small", "plan-hint", "The bundled lab is ready. Add a recorded http://127.0.0.1:PORT origin only for your separate local service."));
       }
       box.append(planActions);
     }

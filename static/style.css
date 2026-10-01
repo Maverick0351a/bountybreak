@@ -118,6 +118,18 @@ main, .rail, nav, #detail { min-width: 0; }
 .intel-card a { display: inline-block; margin: 12px 14px 0 0; color: #ff8e95; overflow-wrap: anywhere; }
 .result-box { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 640px; overflow: auto; color: #e8dadd; font: 13px/1.55 Consolas, monospace; }
 .result-box:empty { display: none; }
+.sandbox-summary { max-width: 900px; }
+.sandbox-summary:empty { display: none; }
+.sandbox-verdict { border-left: 3px solid #ff6973; background: #2c1c24; color: #ffe4e5; padding: 15px 18px; font-weight: 800; border-radius: 5px; margin: 22px 0 14px; }
+.sandbox-case-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.sandbox-case { border: 1px solid #503941; border-radius: 9px; background: #1b1920; padding: 18px; }
+.sandbox-case strong { display: block; margin: 11px 0 5px; font-size: 17px; }
+.sandbox-case p, .sandbox-boundary { color: #c7aeb7; font-size: 11px; line-height: 1.6; }
+.sandbox-boundary { margin: 12px 0 18px; }
+.sandbox-raw { max-width: 900px; color: #efa8ae; font: 11px Consolas, monospace; }
+.sandbox-raw summary { cursor: pointer; padding: 10px 0; }
+.sandbox-raw .result-box { margin-top: 8px; }
+@media (max-width: 600px) { .sandbox-case-grid { grid-template-columns: 1fr; } }
 .brand { gap: 10px; }
 .brand .mark { display: block; flex: none; width: 43px; height: 43px; border: 0; background: transparent; border-radius: 13px; box-shadow: 0 0 28px #e0304030; }
 .brand strong { display: block; color: #fff4f5; font-size: 19px; letter-spacing: -.035em; }

@@ -211,6 +211,12 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn("CVE-2026-88771", prompt)
             self.assertIn("support.citrix.com", prompt)
             self.assertIn("negative_control", prompt)
+            self.assertEqual(FakeModel.requests[1][2]["max_tokens"], 1800)
+            status, response = self.request("/api/ai/draft", "POST", {
+                "question": "What can I test in a synthetic access-control lab?", "prior_art_query": ""})
+            self.assertEqual(status, 200)
+            self.assertEqual(response["prior_art"], [])
+            self.assertNotIn("CVE-", FakeModel.requests[3][2]["messages"][1]["content"])
         finally:
             self.app.model_port = previous_port
             model.shutdown()

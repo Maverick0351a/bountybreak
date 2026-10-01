@@ -350,8 +350,11 @@ class AppHandler(BaseHTTPRequestHandler):
                 self._json(200, result)
             elif route == ["api", "ai", "draft"]:
                 question = clean_text(payload.get("question"), 800)
-                query = clean_text(payload.get("prior_art_query"), 120)
-                records = exploit_db.search(query, limit=2)
+                raw_query = payload.get("prior_art_query", "")
+                if not isinstance(raw_query, str):
+                    raise ValueError("Prior-art query must be text")
+                query = raw_query.strip()
+                records = exploit_db.search(clean_text(query, 120), limit=2) if query else []
                 context = exploit_db.model_context(records)[:5500]
                 sandbox_result = None
                 if "world" in payload or "plan" in payload:
