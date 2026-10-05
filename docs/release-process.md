@@ -9,8 +9,8 @@ This process keeps the downloadable package tied to a reviewed Git commit and ve
 5. Commit the reviewed source and create the archive from that exact commit:
 
    ```powershell
-   git archive --format=zip --prefix=scoperook-v0.8.0/ --output=dist/scoperook-v0.8.0.zip HEAD
-   Get-FileHash -Algorithm SHA256 dist/scoperook-v0.8.0.zip
+   git archive --format=zip --prefix=scoperook-v0.8.1/ --output=dist/scoperook-v0.8.1.zip HEAD
+   Get-FileHash -Algorithm SHA256 dist/scoperook-v0.8.1.zip
    ```
 
 6. Extract the archive into a fresh temporary directory and run:

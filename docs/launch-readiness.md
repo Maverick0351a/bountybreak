@@ -33,7 +33,7 @@ ScopeRook must be sold as an operating layer that helps researchers choose, docu
 
 The repository now has a concise product front page, real dashboard and social-preview assets, a security policy, contribution and conduct guidance, structured issue forms, a pull-request checklist, release notes, and pinned cross-platform CI for Python 3.11 and 3.12. The 100-target and 5,000-session portfolio gate passes, along with 45 unit tests.
 
-The Apache-2.0 community-core license is selected. Build and test the exact v0.8.0 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
+The Apache-2.0 community-core license is selected. Build and test the exact v0.8.1 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
 
 ## Beta success gates
 

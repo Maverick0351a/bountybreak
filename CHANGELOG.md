@@ -4,6 +4,9 @@ All notable ScopeRook changes are recorded here.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-05
+
+- Enforced LF checkouts for hashed reviewed fixtures so integrity validation behaves consistently on Windows and Linux clones.
 - Licensed the community core under Apache-2.0 and positioned ScopeRook as an independent Daybreak Blue bug bounty utility.
 
 ## [0.8.0] - 2026-10-05
@@ -35,7 +38,8 @@ All notable ScopeRook changes are recorded here.
 
 - Initial local dashboard, public exploit-intelligence index, symbolic sandbox, optional local-model adapter, and bounded loopback lab check.
 
-[Unreleased]: https://github.com/Maverick0351a/scoperook/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Maverick0351a/scoperook/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/Maverick0351a/scoperook/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/Maverick0351a/scoperook/compare/v0.2.3...v0.8.0
 [0.2.3]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.3
 [0.2.2]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.2

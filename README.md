@@ -16,7 +16,7 @@
   <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-f0444f">
   <img alt="Built for Daybreak Blue" src="https://img.shields.io/badge/built%20for-Daybreak%20Blue-b64956">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-25171d">
-  <img alt="Version 0.8.0" src="https://img.shields.io/badge/version-0.8.0-b64956">
+  <img alt="Version 0.8.1" src="https://img.shields.io/badge/version-0.8.1-b64956">
 </p>
 
 ![ScopeRook dashboard](docs/assets/scoperook-overview.png)
@@ -134,7 +134,7 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 - [Continuous hunting model](docs/continuous-hunting.md)
 - [Launch readiness and beta gates](docs/launch-readiness.md)
 - [Release process](docs/release-process.md)
-- [ScopeRook 0.8.0 release notes](docs/releases/v0.8.0.md)
+- [ScopeRook 0.8.1 release notes](docs/releases/v0.8.1.md)
 - [Competitive analysis](docs/competitive-analysis.md)
 - [Productization and pricing](docs/productization.md)
 - [Oracle sandbox plan](docs/oracle-sandbox-plan.md)
@@ -143,7 +143,7 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 ## Status and license
 
-ScopeRook 0.8.0 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. ScopeRook does not promise accepted reports or income.
+ScopeRook 0.8.1 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. ScopeRook does not promise accepted reports or income.
 
 The community core is licensed under the [Apache License 2.0](LICENSE). Future hosted, collaboration, support, and commercial components may be offered separately.
 

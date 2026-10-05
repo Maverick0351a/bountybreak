@@ -31,7 +31,7 @@ from workbench import (
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = core.PROTOCOL
-SERVER_VERSION = "0.8.0"
+SERVER_VERSION = "0.8.1"
 SERVER_NAME = "scoperook-daybreak"
 
 
