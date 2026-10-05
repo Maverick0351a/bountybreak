@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import tempfile
 import unittest
 
@@ -106,7 +107,7 @@ class HuntPortfolioTests(unittest.TestCase):
         self.assertEqual(len(report_event["details"]["sha256"]), 64)
 
     def test_account_reference_accepts_only_a_non_secret_local_alias(self):
-        for unsafe in ("researcher@example.com", "https://vault.example/account", "***REMOVED***"):
+        for unsafe in ("researcher@example.com", "https://vault.example/account", "synthetic-secret!"):
             with self.subTest(unsafe=unsafe), self.assertRaisesRegex(ValueError, "local alias"):
                 self.store.set_target_profile(
                     self.item["id"], dict(self.profile, account_reference=unsafe))
@@ -135,6 +136,67 @@ class HuntPortfolioTests(unittest.TestCase):
                 "scope_status": "out_of_scope", "reward_status": "no_reward",
                 "test_status": "active", "constraints": "Excluded", "notes": "",
             })
+
+    def test_unmeasured_time_and_cost_remain_unknown(self):
+        session = self.store.add_hunt_session(self.item["id"], {
+            "lane": "supply_chain", "status": "no_candidate",
+            "environment": "offline_source", "summary": "Historical offline review",
+            "candidate_ids": [], "source_refs": ["sanitized historical record"],
+            "request_count_state": "not_applicable", "target_requests": 0,
+            "next_action": "Preserve for regression comparison", "revisit_after": "",
+        })
+        self.assertIsNone(session["human_minutes"])
+        self.assertIsNone(session["paid_cost_usd"])
+        metrics = hunt_portfolio.build_portfolio(self.store.list())["targets"][0]["metrics"]
+        self.assertIsNone(metrics["human_minutes"])
+        self.assertIsNone(metrics["paid_costs_usd"])
+        self.assertEqual(metrics["effort_interpretation"],
+                         "Null means unrecorded; zero is a measured zero")
+
+    def test_historical_intake_keeps_its_source_review_time(self):
+        historical = {field: "Reviewed historical program rule" for field in INTAKE_FIELDS}
+        historical["program_url"] = "https://bugcrowd.example/program"
+        historical["reviewed_at"] = "2026-09-30T21:20:27Z"
+        historical["policy_max_age_hours"] = 24
+        gate = self.store.set_intake(self.item["id"], historical)
+        self.assertEqual(gate["reviewed_at"], "2026-09-30T21:20:27+00:00")
+        portfolio = hunt_portfolio.build_portfolio(self.store.list(), stale_after_days=90)
+        target = portfolio["targets"][0]
+        self.assertTrue(target["policy_refresh_due"])
+        self.assertEqual(target["policy_max_age_hours"], 24)
+        with self.assertRaisesRegex(ValueError, "timezone"):
+            self.store.set_intake(self.item["id"], dict(historical, reviewed_at="2026-09-30T21:20:27"))
+
+    def test_closed_and_paused_targets_do_not_generate_hunting_work(self):
+        for state in ("closed", "paused"):
+            self.store.set_target_profile(
+                self.item["id"], dict(self.profile, program_status=state,
+                                      next_action=f"Recorded {state} resume condition"))
+            portfolio = hunt_portfolio.build_portfolio(self.store.list())
+            target = portfolio["targets"][0]
+            self.assertEqual(target["next_action_kind"], "wait")
+            self.assertEqual(target["next_action"], f"Recorded {state} resume condition")
+            self.assertIsNone(portfolio["next_target"])
+
+    def test_engagement_schema_is_versioned_and_future_versions_fail_closed(self):
+        path = self.root / self.item["id"] / "engagement.json"
+        current = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(current["schema_version"], 1)
+
+        current.pop("schema_version")
+        path.write_text(json.dumps(current), encoding="utf-8")
+        self.store.set_target_profile(self.item["id"], self.profile)
+        self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["schema_version"], 1)
+
+        future = json.loads(path.read_text(encoding="utf-8"))
+        future["schema_version"] = 99
+        path.write_text(json.dumps(future), encoding="utf-8")
+        records, warnings = self.store.snapshot()
+        self.assertEqual(records, [])
+        self.assertEqual(warnings[0]["engagement_id"], self.item["id"])
+        self.assertTrue(path.exists())
+        with self.assertRaisesRegex(ValueError, "Unsupported engagement schema"):
+            self.store.get(self.item["id"])
 
 
 if __name__ == "__main__":

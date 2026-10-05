@@ -46,10 +46,10 @@ def _changed_fields(before: dict, after: dict, fields: tuple[str, ...] | None = 
     return [key for key in keys if before.get(key) != after.get(key)]
 
 
-def _policy_age(item: dict, now_utc: datetime) -> int | None:
+def _policy_age_hours(item: dict, now_utc: datetime) -> float | None:
     intake = item.get("intake") if isinstance(item.get("intake"), dict) else {}
     reviewed = _time(intake.get("reviewed_at"))
-    return (now_utc - reviewed).days if reviewed else None
+    return round((now_utc - reviewed).total_seconds() / 3_600, 1) if reviewed else None
 
 
 def _lane_state(sessions: list[dict]) -> dict[str, dict]:
@@ -112,8 +112,12 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
             if isinstance(item.get("hunt_sessions"), list) else []
         lanes = _lane_state(sessions)
         untested_lanes = [lane for lane, state in lanes.items() if state["status"] == "untested"]
-        policy_age = _policy_age(item, now_utc)
-        policy_refresh_due = policy_age is None or policy_age > stale_after_days
+        policy_age_hours = _policy_age_hours(item, now_utc)
+        recorded_limit = (item.get("intake") or {}).get("policy_max_age_hours") \
+            if isinstance(item.get("intake"), dict) else None
+        policy_max_age_hours = recorded_limit if type(recorded_limit) is int else stale_after_days * 24
+        policy_refresh_due = (
+            policy_age_hours is None or policy_age_hours > policy_max_age_hours)
         revisit_text = ((sessions[-1].get("revisit_after") if sessions else "")
                         or profile.get("revisit_after") or "")
         revisit = _date(revisit_text)
@@ -134,6 +138,12 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
         elif not profile:
             next_action = "Complete the target profile before selecting a hunting lane"
             action_kind = "document_target"
+        elif program_status != "active":
+            recorded_next = (sessions[-1].get("next_action") if sessions else "") \
+                or profile.get("next_action")
+            next_action = recorded_next or (
+                f"Target is {program_status}; preserve history and do not start a new pass")
+            action_kind = "wait"
         elif not asset_context_complete:
             next_action = "Document the current per-asset scope, reward state, and constraints"
             action_kind = "document_assets"
@@ -143,9 +153,6 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
         elif policy_refresh_due:
             next_action = "Refresh the public program policy and review changes before testing"
             action_kind = "refresh_policy"
-        elif program_status != "active":
-            next_action = f"Target is {program_status}; preserve history and do not start a new pass"
-            action_kind = "wait"
         elif not revisit_due:
             next_action = f"Wait until the recorded revisit date {revisit_text}"
             action_kind = "wait"
@@ -162,10 +169,8 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
                              and type(session.get("target_requests")) is int]
         unknown_request_sessions = sum(session.get("request_count_state") == "unknown"
                                        for session in sessions)
-        human_minutes = sum(session.get("human_minutes", 0) for session in sessions
-                            if type(session.get("human_minutes")) is int)
-        paid_costs = round(sum(session.get("paid_cost_usd", 0.0) for session in sessions
-                               if type(session.get("paid_cost_usd")) in (int, float)), 2)
+        human_minutes = _recorded_total(sessions, "human_minutes")
+        paid_costs = _recorded_total(sessions, "paid_cost_usd")
         documentation_complete = bool(profile) and asset_context_complete and gate["complete"]
         target = {
             "engagement_id": item.get("id"),
@@ -178,7 +183,10 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
             "record_warnings": record_warnings,
             "scope_complete": gate["complete"],
             "policy_reviewed_at": gate.get("reviewed_at"),
-            "policy_age_days": policy_age,
+            "policy_age_hours": policy_age_hours,
+            "policy_age_days": (
+                int(policy_age_hours // 24) if policy_age_hours is not None else None),
+            "policy_max_age_hours": policy_max_age_hours,
             "policy_refresh_due": policy_refresh_due,
             "asset_count": len(assets),
             "documented_asset_count": documented_assets,
@@ -202,8 +210,9 @@ def build_portfolio(records: list[dict], *, stale_after_days: Any = 14) -> dict:
             "metrics": {
                 "measured_target_requests": sum(measured_requests) if measured_requests else None,
                 "unknown_request_count_sessions": unknown_request_sessions,
-                "human_minutes": human_minutes if sessions else None,
-                "paid_costs_usd": paid_costs if sessions else None,
+                "human_minutes": human_minutes,
+                "paid_costs_usd": paid_costs,
+                "effort_interpretation": "Null means unrecorded; zero is a measured zero",
             },
             "hunt_ready": (
                 not record_warnings and documentation_complete and program_status == "active" and revisit_due

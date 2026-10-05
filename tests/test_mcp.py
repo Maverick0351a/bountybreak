@@ -97,7 +97,7 @@ class BountyBreakMcpTests(unittest.TestCase):
         self.assertIn("bountybreak_agent_brief", prompt["messages"][0]["content"]["text"])
 
         legacy_status = self.tools.call("scoperook_status", {})
-        self.assertEqual(legacy_status["server_version"], "0.8.2")
+        self.assertEqual(legacy_status["server_version"], "0.8.3")
         legacy_resource = handle({"jsonrpc": "2.0", "id": 5, "method": "resources/read",
                                   "params": {"uri": "scoperook://methodology/daybreak-blue"}}, self.tools)
         self.assertIn("separate executor preflight", legacy_resource["contents"][0]["text"])
@@ -381,6 +381,30 @@ http:
         })
         self.assertIn("Daybreak Blue", brief["profile"])
         self.assertTrue(brief["selected_candidate_review"]["report_ready"])
+
+    def test_agent_brief_does_not_create_work_for_paused_target(self):
+        created, _gate, _plan = self.create_candidate()
+        self.tools.call("bountybreak_set_target_profile", {
+            "engagement_id": created["id"], "platform": "bugcrowd",
+            "program_status": "paused", "priority": "high",
+            "attacker_payoffs": ["Controlled account access"], "technologies": ["Example"],
+            "account_state": "pending", "account_reference": "Program account set A",
+            "research_strategy": "Wait for the recorded setup gate",
+            "next_action": "Complete the manual MFA handoff", "revisit_after": "",
+            "tags": ["setup-pending"],
+        })
+        self.tools.call("bountybreak_set_asset_context", {
+            "engagement_id": created["id"], "asset": "https://app.example.invalid",
+            "asset_type": "web", "scope_status": "conditional",
+            "reward_status": "rewarded", "test_status": "paused",
+            "constraints": "No target test until setup is complete", "notes": "",
+        })
+        brief = self.tools.call("bountybreak_agent_brief", {
+            "engagement_id": created["id"], "plan_id": "",
+        })
+        self.assertIsNone(brief["next_action"])
+        self.assertEqual(brief["waiting"][0]["status"], "paused")
+        self.assertEqual(brief["waiting"][0]["reason"], "Complete the manual MFA handoff")
 
     def test_unknown_material_intake_keeps_scope_gate_closed(self):
         created = self.tools.call("bountybreak_create_engagement", {

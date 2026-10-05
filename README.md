@@ -12,7 +12,7 @@
   <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-2d8cff">
   <img alt="Designed for approved Daybreak Blue workflows" src="https://img.shields.io/badge/designed%20for-approved%20Daybreak%20Blue-1769aa">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-07111f">
-  <img alt="Version 0.8.2" src="https://img.shields.io/badge/version-0.8.2-2d8cff">
+  <img alt="Version 0.8.3" src="https://img.shields.io/badge/version-0.8.3-2d8cff">
 </p>
 
 <h2 align="center">Quickstart</h2>
@@ -63,7 +63,7 @@ codex mcp add bountybreak -- python C:/path/to/bountybreak/bountybreak_daybreak_
 
 Other stdio MCP clients can use the same command and arguments, while `bountybreak_mcp.py` remains a smaller compatibility server. BountyBreak's product experience and prompts are optimized for Daybreak Blue.
 
-Version 0.8.2 lists the `bountybreak_*` tool namespace. Existing `scoperook_*` calls and the former entry-point filenames remain accepted through the 0.8 release line for migration.
+Version 0.8.3 lists the `bountybreak_*` tool namespace. Existing `scoperook_*` calls and the former entry-point filenames remain accepted through the 0.8 release line for migration.
 
 The primary server exposes compact tools, resources, and prompts for:
 
@@ -141,8 +141,11 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 - [Continuous hunting model](docs/continuous-hunting.md)
 - [Launch readiness and beta gates](docs/launch-readiness.md)
+- [Real-program workflow validation](docs/field-validation-2026-10-05.md)
+- [Threat model](docs/threat-model.md)
+- [Privacy](PRIVACY.md)
 - [Release process](docs/release-process.md)
-- [BountyBreak 0.8.2 release notes](docs/releases/v0.8.2.md)
+- [BountyBreak 0.8.3 release notes](docs/releases/v0.8.3.md)
 - [Competitive analysis](docs/competitive-analysis.md)
 - [Productization and pricing](docs/productization.md)
 - [Oracle sandbox plan](docs/oracle-sandbox-plan.md)
@@ -151,7 +154,7 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 ## Status and license
 
-BountyBreak 0.8.2 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. BountyBreak does not promise accepted reports or income.
+BountyBreak 0.8.3 is a **Daybreak Blue private-beta candidate**. The real-program workflow pass, continuous portfolio, versioned records, privacy boundary, threat model, and scale tests are implemented. An unattended paid public launch remains blocked on signed distribution, backup and restore, and repeated outside-researcher validation. BountyBreak does not promise accepted reports or income.
 
 The community core is licensed under the [Apache License 2.0](LICENSE). Future hosted, collaboration, support, and commercial components may be offered separately.
 

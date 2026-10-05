@@ -31,7 +31,7 @@ from workbench import (
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = core.PROTOCOL
-SERVER_VERSION = "0.8.2"
+SERVER_VERSION = "0.8.3"
 SERVER_NAME = "bountybreak-daybreak"
 
 
@@ -123,8 +123,10 @@ HUNT_SESSION_PROPERTIES = {
                     "items": {"type": "string", "minLength": 1, "maxLength": 300}},
     "request_count_state": {"type": "string", "enum": sorted(REQUEST_COUNT_STATES)},
     "target_requests": {"type": "integer", "minimum": 0, "maximum": 100000},
-    "human_minutes": {"type": "integer", "minimum": 0, "maximum": 100000},
-    "paid_cost_usd": {"type": "number", "minimum": 0, "maximum": 1000000},
+    "human_minutes": {"type": "integer", "minimum": 0, "maximum": 100000,
+                      "description": "Measured human time. Omit when it was not recorded."},
+    "paid_cost_usd": {"type": "number", "minimum": 0, "maximum": 1000000,
+                      "description": "Measured paid cost. Omit when it was not recorded."},
     "next_action": {"type": "string", "minLength": 1, "maxLength": 500},
     "revisit_after": {"type": "string", "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$"},
 }
@@ -180,8 +182,10 @@ EXTRA_TOOLS = [
     ),
     _tool(
         "bountybreak_record_hunt_session",
-        "Append one sanitized hunting pass with coverage lane, environment, result state, candidate links, request accounting, time, cost, next action, and revisit date.",
-        HUNT_SESSION_PROPERTIES, list(HUNT_SESSION_PROPERTIES), read_only=False,
+        "Append one sanitized hunting pass with coverage lane, environment, result state, candidate links, request accounting, optional measured time and cost, next action, and revisit date. Omitted effort stays unknown.",
+        HUNT_SESSION_PROPERTIES,
+        [key for key in HUNT_SESSION_PROPERTIES if key not in {"human_minutes", "paid_cost_usd"}],
+        read_only=False,
     ),
     _tool(
         "bountybreak_hunt_portfolio",

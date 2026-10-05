@@ -9,8 +9,14 @@ This process keeps the downloadable package tied to a reviewed Git commit and ve
 5. Commit the reviewed source and create the archive from that exact commit:
 
    ```powershell
-   git archive --format=zip --prefix=bountybreak-v0.8.2/ --output=dist/bountybreak-v0.8.2.zip HEAD
-   Get-FileHash -Algorithm SHA256 dist/bountybreak-v0.8.2.zip
+   git archive --format=zip --prefix=bountybreak-v0.8.3/ --output=dist/bountybreak-v0.8.3.zip HEAD
+   Get-FileHash -Algorithm SHA256 dist/bountybreak-v0.8.3.zip
+   ```
+
+   Generate the matching SPDX SBOM:
+
+   ```powershell
+   python scripts/generate_sbom.py --version 0.8.3 --output dist/bountybreak-v0.8.3.spdx.json
    ```
 
 6. Extract the archive into a fresh temporary directory and run:
@@ -24,4 +30,4 @@ This process keeps the downloadable package tied to a reviewed Git commit and ve
 8. Tag the verified commit, publish the matching archive and checksum, and confirm GitHub CI passes.
 9. Verify the public release page, installation command, security-reporting link, and a clean first launch from the downloadable archive.
 
-Signing and an SBOM remain public-beta gates. A local archive and checksum alone do not satisfy those gates.
+Release signing remains a public-beta gate. A local archive, checksum, and unsigned SBOM do not satisfy that gate.

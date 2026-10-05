@@ -24,7 +24,7 @@ from workbench import INTAKE_FIELDS, PLAN_DETAIL_FIELDS, Store, clean_text, inta
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = "2025-06-18"
-SERVER_VERSION = "0.8.2"
+SERVER_VERSION = "0.8.3"
 
 
 TOOLS = [
@@ -82,12 +82,19 @@ TOOLS = [
         "name": "bountybreak_set_intake",
         "description": (
             "Save the current program rules needed for a scope-completeness check. Every field must be explicit; "
-            "unknown or pending values remain unresolved. This record never grants authorization."
+            "unknown or pending values remain unresolved. Pass reviewed_at when importing an older source so "
+            "the policy freshness gate remains accurate. This record never grants authorization."
         ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "engagement_id": {"type": "string", "maxLength": 64},
+                "reviewed_at": {"type": "string", "format": "date-time",
+                                "description": "Optional source review time; defaults to now."},
+                "policy_max_age_hours": {
+                    "type": "integer", "minimum": 1, "maximum": 2160,
+                    "description": "Optional program-specific freshness limit; the portfolio default is the fallback.",
+                },
                 **{field: {"type": "string", "minLength": 1, "maxLength": 1000}
                    for field in INTAKE_FIELDS},
             },
@@ -477,7 +484,7 @@ class BountyBreakTools:
             return {"id": item["id"], "kind": item["kind"], "created_at": item["created_at"],
                     "message": "Local planning record created; no target traffic was sent"}
         if name == "bountybreak_set_intake":
-            _only(args, {"engagement_id", *INTAKE_FIELDS})
+            _only(args, {"engagement_id", "reviewed_at", "policy_max_age_hours", *INTAKE_FIELDS})
             ident = clean_text(args.get("engagement_id"), 64)
             gate = self.store.set_intake(ident, args)
             return {"engagement_id": ident, "scope_gate": gate}

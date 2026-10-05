@@ -27,6 +27,7 @@ STATIC = ROOT / "static"
 MAX_BODY = 16_384
 MAX_RECORDS = 200
 MAX_RESPONSE = 65_536
+CURRENT_ENGAGEMENT_SCHEMA = 1
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 TOOLS = [
     {"name": "OWASP ZAP", "role": "Proxy and application testing", "mode": "manual", "link": "https://www.zaproxy.org/"},
@@ -39,6 +40,7 @@ INTAKE_FIELDS = (
     "account_requirements", "test_identity_rules", "safe_harbor", "evidence_requirements",
     "prior_art_sources", "open_questions",
 )
+INTAKE_META_FIELDS = ("policy_max_age_hours",)
 PLAN_DETAIL_FIELDS = (
     "title", "asset", "minimum_access", "negative_control", "evidence_needed", "stop_conditions",
     "affected_version", "prior_art_result", "remediation",
@@ -64,6 +66,24 @@ REQUEST_COUNT_STATES = {"measured", "not_applicable", "unknown"}
 
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def clean_reviewed_at(value: object) -> str:
+    """Normalize an optional source-review time without making old imports look current."""
+    if value in (None, ""):
+        return now()
+    if not isinstance(value, str) or len(value) > 40:
+        raise ValueError("reviewed_at must be an ISO 8601 timestamp with a timezone")
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("reviewed_at must be an ISO 8601 timestamp with a timezone") from exc
+    if parsed.tzinfo is None:
+        raise ValueError("reviewed_at must include a timezone")
+    normalized = parsed.astimezone(timezone.utc)
+    if normalized > datetime.now(timezone.utc):
+        raise ValueError("reviewed_at cannot be in the future")
+    return normalized.isoformat(timespec="seconds")
 
 
 def clean_text(value: object, limit: int) -> str:
@@ -145,6 +165,7 @@ def intake_gate(item: dict) -> dict:
         "missing": missing,
         "unresolved": unresolved,
         "reviewed_at": intake.get("reviewed_at"),
+        "policy_max_age_hours": intake.get("policy_max_age_hours"),
         "interpretation": (
             "Completeness check only. Re-check current program terms before target traffic; "
             "a complete record does not grant authorization."
@@ -214,6 +235,8 @@ class Store:
                         item = json.loads(path.read_text(encoding="utf-8"))
                         if not isinstance(item, dict) or item.get("id") != path.parent.name:
                             raise ValueError("invalid engagement record")
+                        if item.get("schema_version", 1) != CURRENT_ENGAGEMENT_SCHEMA:
+                            raise ValueError("unsupported engagement schema")
                         result.append(item)
                     except (OSError, UnicodeError, ValueError):
                         warnings.append({
@@ -229,9 +252,21 @@ class Store:
     def get(self, ident: str) -> dict:
         with self.lock:
             try:
-                return json.loads(self._path(ident).read_text(encoding="utf-8"))
+                item = json.loads(self._path(ident).read_text(encoding="utf-8"))
             except FileNotFoundError:
                 raise ValueError("Engagement not found") from None
+            if not isinstance(item, dict) or item.get("id") != ident:
+                raise ValueError("Invalid engagement record")
+            if item.get("schema_version", 1) != CURRENT_ENGAGEMENT_SCHEMA:
+                raise ValueError("Unsupported engagement schema version")
+            return item
+
+    def _save(self, ident: str, item: dict) -> None:
+        version = item.get("schema_version", CURRENT_ENGAGEMENT_SCHEMA)
+        if version != CURRENT_ENGAGEMENT_SCHEMA:
+            raise ValueError("Unsupported engagement schema version")
+        item["schema_version"] = CURRENT_ENGAGEMENT_SCHEMA
+        save_json(self._path(ident), item)
 
     def create(self, name: str, kind: str, authority: str, asset: str = "") -> dict:
         if kind not in ("bounty", "internal", "owned_lab"):
@@ -239,11 +274,12 @@ class Store:
         with self.lock:
             if len(self.list()) >= MAX_RECORDS:
                 raise ValueError("Engagement limit reached")
-            item = {"id": slug_for(name), "name": name, "kind": kind,
+            item = {"schema_version": CURRENT_ENGAGEMENT_SCHEMA,
+                    "id": slug_for(name), "name": name, "kind": kind,
                     "authority": authority, "created_at": now(), "assets": [], "plans": [], "runs": []}
             if asset:
                 item["assets"].append({"value": clean_asset(asset), "added_at": now()})
-            save_json(self._path(item["id"]), item)
+            self._save(item["id"], item)
             return item
 
     def add_asset(self, ident: str, value: str) -> dict:
@@ -257,7 +293,7 @@ class Store:
                 raise ValueError("Asset already recorded")
             asset = {"value": value, "added_at": now()}
             assets.append(asset)
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return asset
 
     def set_target_profile(self, ident: str, values: dict) -> dict:
@@ -308,7 +344,7 @@ class Store:
                 })
             item["target_profile"] = profile
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return profile
 
     def set_asset_context(self, ident: str, values: dict) -> dict:
@@ -356,7 +392,7 @@ class Store:
                 })
             asset["context"] = context
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return {"asset": asset_value, **context}
 
     def add_hunt_session(self, ident: str, values: dict) -> dict:
@@ -386,11 +422,14 @@ class Store:
             if environment == "authorized_target" and count_state == "not_applicable":
                 raise ValueError("Authorized-target sessions require measured or explicitly unknown requests")
             human_minutes = values.get("human_minutes")
-            if type(human_minutes) is not int or not 0 <= human_minutes <= 100_000:
-                raise ValueError("human_minutes must be an integer from 0 to 100000")
+            if human_minutes is not None and (
+                    type(human_minutes) is not int or not 0 <= human_minutes <= 100_000):
+                raise ValueError("human_minutes must be omitted or an integer from 0 to 100000")
             paid_cost_usd = values.get("paid_cost_usd")
-            if type(paid_cost_usd) not in (int, float) or not 0 <= paid_cost_usd <= 1_000_000:
-                raise ValueError("paid_cost_usd must be a non-negative number")
+            if paid_cost_usd is not None and (
+                    type(paid_cost_usd) not in (int, float)
+                    or not 0 <= paid_cost_usd <= 1_000_000):
+                raise ValueError("paid_cost_usd must be omitted or a non-negative number")
             candidate_ids = clean_text_list(
                 values.get("candidate_ids"), "candidate_ids", maximum_items=20,
                 maximum_length=12, allow_empty=True)
@@ -417,14 +456,15 @@ class Store:
                 "request_count_state": count_state,
                 "target_requests": request_count if count_state == "measured" else None,
                 "human_minutes": human_minutes,
-                "paid_cost_usd": round(float(paid_cost_usd), 2),
+                "paid_cost_usd": (
+                    round(float(paid_cost_usd), 2) if paid_cost_usd is not None else None),
                 "next_action": clean_text(values.get("next_action"), 500),
                 "revisit_after": clean_date(
                     values.get("revisit_after"), "revisit_after", optional=True),
             }
             sessions.append(session)
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return session
 
     def add_plan(self, ident: str, hypothesis: str, impact: str) -> dict:
@@ -435,7 +475,7 @@ class Store:
             plan = {"id": uuid.uuid4().hex[:12], "hypothesis": hypothesis,
                     "impact": impact, "created_at": now(), "status": "planning"}
             item["plans"].append(plan)
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return plan
 
     def set_intake(self, ident: str, values: dict) -> dict:
@@ -443,8 +483,13 @@ class Store:
             item = self.get(ident)
             intake = {field: clean_text(values.get(field), 1_000) for field in INTAKE_FIELDS}
             intake["program_url"] = clean_program_url(values.get("program_url"))
-            intake["reviewed_at"] = now()
-            content = {field: intake[field] for field in INTAKE_FIELDS}
+            intake["reviewed_at"] = clean_reviewed_at(values.get("reviewed_at"))
+            policy_max_age_hours = values.get("policy_max_age_hours")
+            if policy_max_age_hours is not None and (
+                    type(policy_max_age_hours) is not int or not 1 <= policy_max_age_hours <= 2_160):
+                raise ValueError("policy_max_age_hours must be omitted or an integer from 1 to 2160")
+            intake["policy_max_age_hours"] = policy_max_age_hours
+            content = {field: intake.get(field) for field in (*INTAKE_FIELDS, *INTAKE_META_FIELDS)}
             canonical = json.dumps(content, ensure_ascii=False, sort_keys=True,
                                    separators=(",", ":")).encode("utf-8")
             intake_hash = hashlib.sha256(canonical).hexdigest()
@@ -454,7 +499,9 @@ class Store:
                 raise ValueError("Existing intake history is invalid")
             previous = item.get("intake")
             if previous and not history:
-                previous_content = {field: previous.get(field) for field in INTAKE_FIELDS}
+                previous_content = {
+                    field: previous.get(field) for field in (*INTAKE_FIELDS, *INTAKE_META_FIELDS)
+                }
                 previous_canonical = json.dumps(previous_content, ensure_ascii=False, sort_keys=True,
                                                 separators=(",", ":")).encode("utf-8")
                 history.append({
@@ -470,7 +517,7 @@ class Store:
                                 "content_sha256": intake_hash, "snapshot": content})
             item["intake"] = intake
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return intake_gate(item)
 
     def compare_intake(self, ident: str) -> dict:
@@ -495,7 +542,8 @@ class Store:
             previous = history[-2]
             before = previous.get("snapshot") if isinstance(previous.get("snapshot"), dict) else {}
             after = current.get("snapshot") if isinstance(current.get("snapshot"), dict) else {}
-            changed = [field for field in INTAKE_FIELDS if before.get(field) != after.get(field)]
+            changed = [field for field in (*INTAKE_FIELDS, *INTAKE_META_FIELDS)
+                       if before.get(field) != after.get(field)]
             return {
                 "engagement_id": ident, "snapshot_count": len(history), "changed": bool(changed),
                 "changed_fields": changed,
@@ -525,7 +573,7 @@ class Store:
                 raise ValueError("Candidate asset must be recorded on the engagement")
             item["plans"].append(plan)
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return plan
 
     def set_candidate_assessment(self, ident: str, plan_id: str, values: dict) -> dict:
@@ -559,7 +607,7 @@ class Store:
             assessment["assessed_at"] = now()
             plan["assessment"] = assessment
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return assessment
 
     def set_validation_contract(self, ident: str, plan_id: str, values: dict) -> dict:
@@ -609,7 +657,7 @@ class Store:
             }
             plan["validation_contract"] = contract
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return contract
 
     def add_observation(self, ident: str, plan_id: str, values: dict) -> dict:
@@ -637,7 +685,7 @@ class Store:
             }
             observations.append(observation)
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return observation
 
     def add_outcome(self, ident: str, plan_id: str, values: dict) -> dict:
@@ -674,7 +722,7 @@ class Store:
                 event["note"] = note
             outcomes.append(event)
             item["updated_at"] = now()
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return event
 
     def add_run(self, ident: str, plan_id: str, evidence: dict) -> dict:
@@ -687,7 +735,7 @@ class Store:
             record = {"id": uuid.uuid4().hex[:12], "plan_id": plan_id,
                       "created_at": now(), **evidence}
             item["runs"].append(record)
-            save_json(self._path(ident), item)
+            self._save(ident, item)
             return record
 
 

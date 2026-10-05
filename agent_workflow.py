@@ -8,6 +8,7 @@ import json
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+import hunt_portfolio
 from workbench import PLAN_DETAIL_FIELDS, UNRESOLVED, intake_gate, save_json
 
 
@@ -206,14 +207,22 @@ def rank_candidates(records: list[dict], data_dir: Path, engagement_id: str = ""
 def work_queue(records: list[dict], data_dir: Path, engagement_id: str = "") -> dict:
     actions = []
     waiting = []
+    portfolio = hunt_portfolio.build_portfolio(records)
+    portfolio_targets = {entry["engagement_id"]: entry for entry in portfolio["targets"]}
     for item in records:
         if engagement_id and item.get("id") != engagement_id:
             continue
-        gate = intake_gate(item)
-        if not gate["complete"]:
+        target = portfolio_targets.get(item.get("id"), {})
+        action_kind = target.get("next_action_kind")
+        if action_kind == "wait":
+            waiting.append({"engagement_id": item["id"], "plan_id": None,
+                            "status": target.get("program_status", "paused"),
+                            "reason": target.get("next_action")})
+            continue
+        if action_kind in {"repair_record", "document_target", "document_assets",
+                           "resolve_scope", "refresh_policy"}:
             actions.append({"priority": 1, "engagement_id": item["id"], "plan_id": None,
-                            "action": "Refresh and complete the current program intake",
-                            "reason": {"missing": gate["missing"], "unresolved": gate["unresolved"]}})
+                            "action": target.get("next_action"), "reason": action_kind})
             continue
         if not item.get("plans"):
             actions.append({"priority": 2, "engagement_id": item["id"], "plan_id": None,

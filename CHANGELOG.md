@@ -4,6 +4,16 @@ All notable BountyBreak changes are recorded here.
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-05
+
+- Preserved historical policy review timestamps and per-program freshness limits during real-target imports.
+- Kept unmeasured session time and cost as unknown instead of fabricating zero values.
+- Prevented the agent brief from proposing candidate research on paused or closed targets.
+- Added engagement schema version 1 with legacy compatibility and fail-closed future-version handling.
+- Recorded a sanitized three-program field validation with no new target traffic.
+- Added a product threat model and local-first privacy notice.
+- Added a dependency-free SPDX 2.3 SBOM generator for release artifacts.
+
 ## [0.8.2] - 2026-10-05
 
 - Renamed the product from ScopeRook to BountyBreak with an original horizon-and-target mark and a midnight/electric-blue interface.
@@ -46,7 +56,8 @@ All notable BountyBreak changes are recorded here.
 
 - Initial local dashboard, public exploit-intelligence index, symbolic sandbox, optional local-model adapter, and bounded loopback lab check.
 
-[Unreleased]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/Maverick0351a/bountybreak/compare/v0.2.3...v0.8.0
