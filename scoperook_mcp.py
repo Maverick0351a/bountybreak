@@ -18,13 +18,13 @@ import sys
 from typing import Any
 import uuid
 
-from intelligence import exploit_db, logic_sandbox
+from intelligence import advisory_sources, exploit_db, live_sources, logic_sandbox
 from workbench import INTAKE_FIELDS, PLAN_DETAIL_FIELDS, Store, clean_text, intake_gate
 
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = "2025-06-18"
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.4.0"
 
 
 TOOLS = [
@@ -226,6 +226,87 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
+        "name": "scoperook_search_current_kev",
+        "description": (
+            "Fetch the current CISA Known Exploited Vulnerabilities catalog from its fixed official endpoint, "
+            "then filter it locally by optional text and date. No target name, file, or URL is sent."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "maxLength": 120, "default": ""},
+                "added_since": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 25, "default": 10},
+            },
+            "additionalProperties": False,
+        },
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    },
+    {
+        "name": "scoperook_verify_cve",
+        "description": (
+            "Verify one exact CVE against the current official CVE List v5 record and CISA KEV catalog. "
+            "Returns sanitized metadata and references, never exploit code or a target test."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"cve_id": {"type": "string", "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$"}},
+            "required": ["cve_id"],
+            "additionalProperties": False,
+        },
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    },
+    {
+        "name": "scoperook_research_cve",
+        "description": (
+            "Research one exact CVE across CVE List, CISA KEV, NVD, FIRST EPSS, GitHub Advisories, CIRCL "
+            "sightings, and Exploit-DB metadata. Source failures stay explicit and no exploit code is fetched."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"cve_id": {"type": "string", "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$"}},
+            "required": ["cve_id"],
+            "additionalProperties": False,
+        },
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    },
+    {
+        "name": "scoperook_search_exploitdb",
+        "description": (
+            "Search the current official Exploit-DB GitLab metadata locally by title/product text or exact CVE. "
+            "Returns reviewed status and reference links only; exploit files are never fetched."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "maxLength": 120, "default": ""},
+                "cve_id": {"type": "string", "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$", "default": ""},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 25, "default": 10},
+            },
+            "additionalProperties": False,
+        },
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    },
+    {
+        "name": "scoperook_query_osv_package",
+        "description": (
+            "Query OSV for advisories affecting an exact ecosystem-native package and optional version. "
+            "Returns affected ranges and references; it does not inspect or contact a target."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ecosystem": {"type": "string", "minLength": 1, "maxLength": 100},
+                "package": {"type": "string", "minLength": 1, "maxLength": 300},
+                "version": {"type": "string", "maxLength": 200, "default": ""},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 25},
+            },
+            "required": ["ecosystem", "package"],
+            "additionalProperties": False,
+        },
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    },
+    {
         "name": "scoperook_simulate_hypothesis",
         "description": (
             "Evaluate bounded JSON state transitions and a negative control entirely offline. "
@@ -359,7 +440,9 @@ class ScopeRookTools:
                     ),
                 },
                 "capabilities": ["scope intake", "candidate and evidence records", "report drafts",
-                                 "outcome ledger", "public prior-art search", "offline symbolic simulation"],
+                                 "outcome ledger", "bundled prior-art search", "current CISA KEV search",
+                                 "multi-source CVE research", "Exploit-DB metadata search",
+                                 "OSV package applicability", "offline symbolic simulation"],
                 "excluded_capabilities": ["target traffic", "scanners", "credentials", "report submission"],
             }
         if name == "scoperook_list_engagements":
@@ -452,6 +535,28 @@ class ScopeRookTools:
                     "affected version, configuration, scope, and duplicate risk."
                 ),
             }
+        if name == "scoperook_search_current_kev":
+            _only(args, {"query", "added_since", "limit"})
+            return live_sources.search_kev(
+                args.get("query", ""), added_since=args.get("added_since", ""), limit=args.get("limit", 10),
+            )
+        if name == "scoperook_verify_cve":
+            _only(args, {"cve_id"})
+            return live_sources.verify_cve(args.get("cve_id"))
+        if name == "scoperook_research_cve":
+            _only(args, {"cve_id"})
+            return advisory_sources.research_cve(args.get("cve_id"))
+        if name == "scoperook_search_exploitdb":
+            _only(args, {"query", "cve_id", "limit"})
+            return advisory_sources.search_exploitdb(
+                query=args.get("query", ""), cve_id=args.get("cve_id", ""), limit=args.get("limit", 10),
+            )
+        if name == "scoperook_query_osv_package":
+            _only(args, {"ecosystem", "package", "version", "limit"})
+            return advisory_sources.query_osv_package(
+                args.get("ecosystem"), args.get("package"), version=args.get("version", ""),
+                limit=args.get("limit", 25),
+            )
         if name == "scoperook_simulate_hypothesis":
             _only(args, {"world", "plan", "explore"})
             world, plan = args.get("world"), args.get("plan")

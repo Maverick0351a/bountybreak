@@ -229,10 +229,68 @@ class Store:
             intake = {field: clean_text(values.get(field), 1_000) for field in INTAKE_FIELDS}
             intake["program_url"] = clean_program_url(values.get("program_url"))
             intake["reviewed_at"] = now()
+            content = {field: intake[field] for field in INTAKE_FIELDS}
+            canonical = json.dumps(content, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":")).encode("utf-8")
+            intake_hash = hashlib.sha256(canonical).hexdigest()
+            intake["content_sha256"] = intake_hash
+            history = item.setdefault("intake_history", [])
+            if not isinstance(history, list):
+                raise ValueError("Existing intake history is invalid")
+            previous = item.get("intake")
+            if previous and not history:
+                previous_content = {field: previous.get(field) for field in INTAKE_FIELDS}
+                previous_canonical = json.dumps(previous_content, ensure_ascii=False, sort_keys=True,
+                                                separators=(",", ":")).encode("utf-8")
+                history.append({
+                    "reviewed_at": previous.get("reviewed_at"),
+                    "content_sha256": previous.get("content_sha256")
+                    or hashlib.sha256(previous_canonical).hexdigest(),
+                    "snapshot": previous_content,
+                })
+            if not history or history[-1].get("content_sha256") != intake_hash:
+                if len(history) >= MAX_RECORDS:
+                    raise ValueError("Intake history limit reached")
+                history.append({"reviewed_at": intake["reviewed_at"],
+                                "content_sha256": intake_hash, "snapshot": content})
             item["intake"] = intake
             item["updated_at"] = now()
             save_json(self._path(ident), item)
             return intake_gate(item)
+
+    def compare_intake(self, ident: str) -> dict:
+        """Return a value-minimizing diff between the two latest policy snapshots."""
+        with self.lock:
+            item = self.get(ident)
+            history = item.get("intake_history", [])
+            if not isinstance(history, list):
+                raise ValueError("Existing intake history is invalid")
+            if not history:
+                return {"engagement_id": ident, "snapshot_count": 0, "changed": False,
+                        "changed_fields": [], "message": "No intake snapshot is recorded"}
+            current = history[-1]
+            if len(history) == 1:
+                return {
+                    "engagement_id": ident, "snapshot_count": 1, "changed": False,
+                    "changed_fields": [], "current_reviewed_at": current.get("reviewed_at"),
+                    "current_sha256": current.get("content_sha256"),
+                    "scope_gate": intake_gate(item),
+                    "message": "Baseline intake snapshot recorded; no earlier snapshot exists",
+                }
+            previous = history[-2]
+            before = previous.get("snapshot") if isinstance(previous.get("snapshot"), dict) else {}
+            after = current.get("snapshot") if isinstance(current.get("snapshot"), dict) else {}
+            changed = [field for field in INTAKE_FIELDS if before.get(field) != after.get(field)]
+            return {
+                "engagement_id": ident, "snapshot_count": len(history), "changed": bool(changed),
+                "changed_fields": changed,
+                "previous_reviewed_at": previous.get("reviewed_at"),
+                "current_reviewed_at": current.get("reviewed_at"),
+                "previous_sha256": previous.get("content_sha256"),
+                "current_sha256": current.get("content_sha256"),
+                "scope_gate": intake_gate(item),
+                "message": "Changed field names only; read the engagement explicitly to inspect current values",
+            }
 
     def add_candidate(self, ident: str, hypothesis: str, impact: str, details: dict) -> dict:
         with self.lock:
@@ -254,6 +312,40 @@ class Store:
             item["updated_at"] = now()
             save_json(self._path(ident), item)
             return plan
+
+    def set_candidate_assessment(self, ident: str, plan_id: str, values: dict) -> dict:
+        """Record transparent selection factors without pretending to predict acceptance."""
+        with self.lock:
+            item = self.get(ident)
+            plan = next((entry for entry in item.get("plans", []) if entry.get("id") == plan_id), None)
+            if plan is None:
+                raise ValueError("Plan not found")
+            allowed = {
+                "duplicate_risk": {"low", "medium", "high", "unknown"},
+                "setup_cost": {"none", "low", "medium", "high"},
+                "proof_strength": {"clear_end_to_end", "partial", "source_only"},
+                "decision": {"pursue", "hold", "stop"},
+            }
+            assessment = {
+                "attacker_motive": clean_text(values.get("attacker_motive"), 1_000),
+                "plausible_payoff": clean_text(values.get("plausible_payoff"), 1_000),
+                "duplicate_risk_reason": clean_text(values.get("duplicate_risk_reason"), 1_000),
+                "proof_path": clean_text(values.get("proof_path"), 1_000),
+            }
+            for field, choices in allowed.items():
+                value = values.get(field)
+                if value not in choices:
+                    raise ValueError(f"Unsupported {field}")
+                assessment[field] = value
+            expected_requests = values.get("expected_requests")
+            if type(expected_requests) is not int or not 0 <= expected_requests <= 1_000:
+                raise ValueError("expected_requests must be an integer from 0 to 1000")
+            assessment["expected_requests"] = expected_requests
+            assessment["assessed_at"] = now()
+            plan["assessment"] = assessment
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return assessment
 
     def add_observation(self, ident: str, plan_id: str, values: dict) -> dict:
         with self.lock:

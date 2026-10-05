@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "python-access-control",
+  "title": "Synthetic object-owner authorization check",
+  "purpose": "Compare a deliberately vulnerable object read with an owner-check negative control using synthetic records.",
+  "runtime": "python3",
+  "entrypoint": "runner.py",
+  "entrypoint_sha256": "2af7f4dd9e8e0358c19a13d16e1f41e2ce8fe6d81402fbb6c3a6444d125f2b85",
+  "limits": {
+    "timeout_seconds": 3,
+    "cpu_seconds": 2,
+    "memory_mib": 192
+  },
+  "cases": [
+    {
+      "id": "candidate",
+      "role": "candidate",
+      "args": ["candidate"],
+      "expected_exit_code": 0,
+      "stdout_contains": [
+        "ISOLATION uid=dropped caps=none no_new_privs=yes host_mount=absent network=blocked",
+        "OBSERVED_UNAUTHORIZED_READ",
+        "marker=CONTROLLED-BOB"
+      ],
+      "stdout_not_contains": ["DENIED_BY_OWNER_CHECK"]
+    },
+    {
+      "id": "negative-control",
+      "role": "negative_control",
+      "args": ["negative-control"],
+      "expected_exit_code": 0,
+      "stdout_contains": [
+        "ISOLATION uid=dropped caps=none no_new_privs=yes host_mount=absent network=blocked",
+        "DENIED_BY_OWNER_CHECK"
+      ],
+      "stdout_not_contains": ["UNEXPECTED_CONTROL_BYPASS"]
+    }
+  ]
+}
