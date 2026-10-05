@@ -34,6 +34,16 @@ TOOLS = [
     {"name": "ffuf", "role": "Content discovery", "mode": "gated external tool", "link": "https://github.com/ffuf/ffuf"},
     {"name": "Shannon", "role": "Autonomous application testing", "mode": "lab only here", "link": "https://github.com/KeygraphHQ/shannon"},
 ]
+INTAKE_FIELDS = (
+    "program_url", "exclusions", "reward_status", "technique_restrictions", "rate_limits",
+    "account_requirements", "test_identity_rules", "safe_harbor", "evidence_requirements",
+    "prior_art_sources", "open_questions",
+)
+PLAN_DETAIL_FIELDS = (
+    "title", "asset", "minimum_access", "negative_control", "evidence_needed", "stop_conditions",
+    "affected_version", "prior_art_result", "remediation",
+)
+UNRESOLVED = re.compile(r"^(unknown|tbd|pending|not checked|not reviewed|unavailable)(\b|$)", re.I)
 
 
 def now() -> str:
@@ -49,6 +59,12 @@ def clean_text(value: object, limit: int) -> str:
     return value
 
 
+def clean_optional_text(value: object, limit: int) -> str:
+    if value in (None, ""):
+        return ""
+    return clean_text(value, limit)
+
+
 def clean_asset(value: object) -> str:
     """Keep an exact planning label; never treat it as an execution target."""
     asset = clean_text(value, 300)
@@ -59,6 +75,33 @@ def clean_asset(value: object) -> str:
         if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
             raise ValueError("Use an HTTP(S) URL without credentials")
     return asset
+
+
+def clean_program_url(value: object) -> str:
+    url = clean_text(value, 500)
+    parsed = urlsplit(url)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+        raise ValueError("Program URL must be an HTTPS URL without credentials or a fragment")
+    return url
+
+
+def intake_gate(item: dict) -> dict:
+    intake = item.get("intake") if isinstance(item.get("intake"), dict) else {}
+    missing = [field for field in INTAKE_FIELDS if not isinstance(intake.get(field), str) or not intake[field].strip()]
+    if not item.get("assets"):
+        missing.append("exact_assets")
+    unresolved = [field for field in INTAKE_FIELDS
+                  if isinstance(intake.get(field), str) and UNRESOLVED.match(intake[field].strip())]
+    return {
+        "complete": not missing and not unresolved,
+        "missing": missing,
+        "unresolved": unresolved,
+        "reviewed_at": intake.get("reviewed_at"),
+        "interpretation": (
+            "Completeness check only. Re-check current program terms before target traffic; "
+            "a complete record does not grant authorization."
+        ),
+    }
 
 
 def local_origin(value: object, app_port: int) -> tuple[str, int, str]:
@@ -179,6 +222,103 @@ class Store:
             item["plans"].append(plan)
             save_json(self._path(ident), item)
             return plan
+
+    def set_intake(self, ident: str, values: dict) -> dict:
+        with self.lock:
+            item = self.get(ident)
+            intake = {field: clean_text(values.get(field), 1_000) for field in INTAKE_FIELDS}
+            intake["program_url"] = clean_program_url(values.get("program_url"))
+            intake["reviewed_at"] = now()
+            item["intake"] = intake
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return intake_gate(item)
+
+    def add_candidate(self, ident: str, hypothesis: str, impact: str, details: dict) -> dict:
+        with self.lock:
+            item = self.get(ident)
+            if len(item["plans"]) >= MAX_RECORDS:
+                raise ValueError("Plan limit reached")
+            plan = {
+                "id": uuid.uuid4().hex[:12],
+                "hypothesis": clean_text(hypothesis, 500),
+                "impact": clean_text(impact, 300),
+                "created_at": now(),
+                "status": "candidate",
+            }
+            for field in PLAN_DETAIL_FIELDS:
+                plan[field] = clean_text(details.get(field), 1_000)
+            if plan["asset"] not in {entry["value"] for entry in item.get("assets", [])}:
+                raise ValueError("Candidate asset must be recorded on the engagement")
+            item["plans"].append(plan)
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return plan
+
+    def add_observation(self, ident: str, plan_id: str, values: dict) -> dict:
+        with self.lock:
+            item = self.get(ident)
+            if not any(plan["id"] == plan_id for plan in item["plans"]):
+                raise ValueError("Plan not found")
+            observations = item.setdefault("observations", [])
+            if len(observations) >= MAX_RECORDS:
+                raise ValueError("Observation limit reached")
+            classification = values.get("classification")
+            if classification not in ("observed", "derived", "unverified"):
+                raise ValueError("Classification must be observed, derived, or unverified")
+            references = values.get("evidence_refs", [])
+            if (not isinstance(references, list) or len(references) > 20
+                    or not all(isinstance(ref, str) and 0 < len(ref.strip()) <= 300 for ref in references)):
+                raise ValueError("Evidence refs must be a list of up to 20 short local references")
+            observation = {
+                "id": uuid.uuid4().hex[:12], "plan_id": plan_id, "classification": classification,
+                "summary": clean_text(values.get("summary"), 1_000),
+                "reproduction": clean_text(values.get("reproduction"), 2_000),
+                "negative_control_result": clean_text(values.get("negative_control_result"), 1_000),
+                "independent_impact_check": clean_text(values.get("independent_impact_check"), 1_000),
+                "evidence_refs": [ref.strip() for ref in references], "created_at": now(),
+            }
+            observations.append(observation)
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return observation
+
+    def add_outcome(self, ident: str, plan_id: str, values: dict) -> dict:
+        with self.lock:
+            item = self.get(ident)
+            if not any(plan["id"] == plan_id for plan in item["plans"]):
+                raise ValueError("Plan not found")
+            outcomes = item.setdefault("outcomes", [])
+            if len(outcomes) >= MAX_RECORDS:
+                raise ValueError("Outcome limit reached")
+            status = values.get("status")
+            allowed = {"draft", "submitted", "needs_more_info", "triaged", "accepted", "rejected",
+                       "duplicate", "withdrawn", "paid"}
+            if status not in allowed:
+                raise ValueError("Unsupported outcome status")
+            event = {"id": uuid.uuid4().hex[:12], "plan_id": plan_id,
+                     "status": status, "recorded_at": now()}
+            submission_reference = clean_optional_text(values.get("submission_reference"), 300)
+            if submission_reference:
+                event["submission_reference"] = submission_reference
+            for field in ("pending_award_usd", "received_cash_usd", "paid_costs_usd"):
+                value = values.get(field)
+                if value is not None:
+                    if type(value) not in (int, float) or value < 0 or value > 10_000_000:
+                        raise ValueError(f"{field} must be a non-negative number")
+                    event[field] = round(float(value), 2)
+            human_minutes = values.get("human_minutes")
+            if human_minutes is not None:
+                if type(human_minutes) is not int or not 0 <= human_minutes <= 1_000_000:
+                    raise ValueError("human_minutes must be a non-negative integer")
+                event["human_minutes"] = human_minutes
+            note = clean_optional_text(values.get("note"), 1_000)
+            if note:
+                event["note"] = note
+            outcomes.append(event)
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return event
 
     def add_run(self, ident: str, plan_id: str, evidence: dict) -> dict:
         with self.lock:

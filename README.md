@@ -20,7 +20,7 @@ No installation, cloud account, Docker runtime, or scanner download is required.
 
 ## Codex and Claude tool
 
-`scoperook_mcp.py` is a dependency-free stdio MCP server that both Codex and Claude can launch. It exposes local planning records, metadata-only engagement listings, the public prior-art index, and offline symbolic simulation. It intentionally omits target requests, scanners, credentials, full engagement reads, and report submission.
+`scoperook_mcp.py` is a dependency-free stdio MCP server that both Codex and Claude can launch. It gives an agent a durable local source of truth for program scope, exact assets, bounded candidates, sanitized observations, report readiness, submission outcomes, received cash, costs, human time, public prior art, and offline symbolic simulation. Engagement listings are metadata-only. Reading one full engagement requires an explicit tool call. The server intentionally omits target requests, scanners, credentials, and report submission.
 
 Register it with an explicit Python executable and repository path. For example:
 
@@ -28,7 +28,19 @@ Register it with an explicit Python executable and repository path. For example:
 codex mcp add scoperook -- python C:/path/to/scoperook/scoperook_mcp.py --data-dir C:/path/to/scoperook/data
 ```
 
-Claude uses the same command and arguments in an `mcpServers.scoperook` stdio entry. Tool outputs can be sent to the connected agent provider. Engagement listing is metadata-only; prior-art records are public; create/add tools store exactly what the agent supplies. Do not put secrets, customer data, private program text, or live session material in tool arguments.
+Claude uses the same command and arguments in an `mcpServers.scoperook` stdio entry. Tool outputs can be sent to the connected agent provider. Prior-art records are public; create/add tools store exactly what the agent supplies. Do not put secrets, customer data, private program text, or live session material in tool arguments.
+
+The useful agent sequence is:
+
+1. Call `scoperook_status` and `scoperook_list_engagements`, then explicitly read only the engagement being worked on.
+2. Create the engagement, record each exact asset, and save the current program intake. The gate checks the program URL, exclusions, rewards, technique limits, rate limits, account and identity rules, safe harbor, evidence rules, prior-art sources, open questions, and exact assets. Unknown or pending material values keep the gate closed.
+3. Search the bundled prior-art index, manually verify relevant primary sources, and save a candidate with minimum access, negative control, evidence need, affected version, remediation, and stop conditions.
+4. Perform any authorized live work separately through the normal browser or terminal. The MCP never turns a saved URL into traffic.
+5. Record sanitized observations as `observed`, `derived`, or `unverified`, with reproduction, control result, independent impact check, and local evidence references.
+6. Build a concise report. ScopeRook refuses to build it until the scope gate, candidate fields, observed evidence, negative control, independent impact check, and evidence references are complete.
+7. Record each candidate's submission reference, state, and financial facts. Pending awards, received cash, paid costs, and measured human time remain separate; omitted values stay unknown instead of becoming zero.
+
+This split lets the agent organize and audit the whole bounty workflow without giving a generic MCP permission to scan whatever text appears in a conversation.
 
 ## Research workflow
 
