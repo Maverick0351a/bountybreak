@@ -105,23 +105,35 @@ class ToolRegistry:
     @staticmethod
     def _availability(record: dict) -> dict:
         path = record.get("local_path", "")
+        declared = record.get("declared_available", False)
         if path:
             candidate = Path(path)
             exists = candidate.exists()
+            path_kind = "directory" if exists and candidate.is_dir() else (
+                "file" if exists and candidate.is_file() else None)
+            requires_file = record["interface"] in {"local_cli", "human_ui"}
+            usable_path = exists and (not requires_file or candidate.is_file())
+            if not exists:
+                verification = "local path is missing"
+            elif requires_file and candidate.is_dir():
+                verification = "local CLI or UI handoff requires an exact file, not a directory"
+            elif not declared:
+                verification = "local path exists but the registry marks the tool unavailable"
+            else:
+                verification = "declared available and exact local path exists"
             return {
-                "available": exists,
-                "verification": "local path exists" if exists else "local path is missing",
-                "path_kind": "directory" if exists and candidate.is_dir() else (
-                    "file" if exists and candidate.is_file() else None),
+                "available": bool(declared and usable_path),
+                "verification": verification,
+                "path_kind": path_kind,
             }
         if record["interface"] == "mcp_server":
             return {
-                "available": bool(record.get("mcp_server")),
+                "available": bool(declared and record.get("mcp_server")),
                 "verification": "registry declaration only; client registration is not probed",
                 "path_kind": None,
             }
         return {
-            "available": record.get("declared_available", False),
+            "available": declared,
             "verification": "registry declaration only",
             "path_kind": None,
         }
@@ -232,8 +244,10 @@ class ToolRegistry:
 
         active = operation_class != "offline"
         gate = intake_gate(engagement) if engagement else None
-        execution_ready = not active
+        execution_ready = bool(candidates) and not active
         blockers = []
+        if not candidates:
+            blockers.append("No registered available tool provides every required capability")
         if active:
             if engagement is None:
                 blockers.append("Select an engagement before any target-facing handoff")

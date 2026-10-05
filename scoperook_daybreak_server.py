@@ -15,15 +15,17 @@ import sys
 from typing import Any
 
 import agent_workflow
+import integration_catalog
 import scoperook_mcp as core
 from sandbox_runner import LabRunner
 import surface_import
 from tool_router import INTERFACES, OPERATION_CLASSES, OUTPUT_FORMATS, PHASES, ToolRegistry
+from workbench import VALIDATION_ENVIRONMENTS
 
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = core.PROTOCOL
-SERVER_VERSION = "0.6.0"
+SERVER_VERSION = "0.7.0"
 SERVER_NAME = "scoperook-daybreak"
 
 
@@ -54,6 +56,23 @@ ASSESSMENT_PROPERTIES = {
     "proof_path": {"type": "string", "minLength": 1, "maxLength": 1000},
     "expected_requests": {"type": "integer", "minimum": 0, "maximum": 1000},
     "decision": {"type": "string", "enum": ["pursue", "hold", "stop"]},
+}
+
+VALIDATION_PROPERTIES = {
+    "engagement_id": {"type": "string", "maxLength": 64},
+    "plan_id": {"type": "string", "maxLength": 12},
+    "environment": {"type": "string", "enum": sorted(VALIDATION_ENVIRONMENTS)},
+    "candidate_actor": {"type": "string", "minLength": 1, "maxLength": 300},
+    "control_actor": {"type": "string", "minLength": 1, "maxLength": 300},
+    "starting_state": {"type": "string", "minLength": 1, "maxLength": 500},
+    "sequence_steps": {"type": "array", "minItems": 1, "maxItems": 12,
+                       "items": {"type": "string", "minLength": 1, "maxLength": 300}},
+    "expected_secure_behavior": {"type": "string", "minLength": 1, "maxLength": 500},
+    "suspected_behavior": {"type": "string", "minLength": 1, "maxLength": 500},
+    "negative_control": {"type": "string", "minLength": 1, "maxLength": 500},
+    "independent_impact_check": {"type": "string", "minLength": 1, "maxLength": 500},
+    "cleanup": {"type": "string", "minLength": 1, "maxLength": 500},
+    "max_requests": {"type": "integer", "minimum": 0, "maximum": 100},
 }
 
 REGISTRY_PROPERTIES = {
@@ -89,6 +108,11 @@ EXTRA_TOOLS = [
         "scoperook_set_candidate_assessment",
         "Record attacker motive, concrete payoff, duplicate risk, setup cost, proof path, request estimate, and a pursue/hold/stop decision. This is a transparent planning assessment, not an acceptance prediction.",
         ASSESSMENT_PROPERTIES, list(ASSESSMENT_PROPERTIES), read_only=False,
+    ),
+    _tool(
+        "scoperook_set_validation_contract",
+        "Record an identity, state, sequence, control, cleanup, and request-bounded proof contract for one candidate. This plans verification but never runs it or grants authorization.",
+        VALIDATION_PROPERTIES, list(VALIDATION_PROPERTIES), read_only=False,
     ),
     _tool(
         "scoperook_agent_brief",
@@ -155,6 +179,17 @@ EXTRA_TOOLS = [
             "plan_id": {"type": "string", "maxLength": 12},
         },
         ["phase", "required_capabilities", "operation_class"], read_only=True,
+    ),
+    _tool(
+        "scoperook_search_integration_catalog",
+        "Search product-maintained routing guidance for optional security tools. Results never claim installation or authorization and never download or launch software.",
+        {
+            "query": {"type": "string", "maxLength": 120},
+            "phase": {"type": "string", "maxLength": 80},
+            "operation_class": {"type": "string", "maxLength": 80},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 25},
+        },
+        [], read_only=True,
     ),
     _tool(
         "scoperook_import_surface_artifact",
@@ -266,6 +301,8 @@ class ScopeRookTools(core.ScopeRookTools):
             result["capabilities"].extend([
                 "deterministic agent workflow", "candidate economics", "local evidence hashing",
                 "reviewed synthetic labs", "existing-tool capability routing",
+                "optional integration catalog",
+                "role state and sequence validation contracts",
                 "secret-reducing HAR and OpenAPI route import",
             ])
             result["excluded_capabilities"] = sorted(set(result["excluded_capabilities"] + [
@@ -278,6 +315,12 @@ class ScopeRookTools(core.ScopeRookTools):
             plan_id = core.clean_text(args.get("plan_id"), 12)
             assessment = self.store.set_candidate_assessment(ident, plan_id, args)
             return {"engagement_id": ident, "plan_id": plan_id, "assessment": assessment}
+        if name == "scoperook_set_validation_contract":
+            core._only(args, set(VALIDATION_PROPERTIES))
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            plan_id = core.clean_text(args.get("plan_id"), 12)
+            contract = self.store.set_validation_contract(ident, plan_id, args)
+            return {"engagement_id": ident, "plan_id": plan_id, "validation_contract": contract}
         if name == "scoperook_compare_intake":
             core._only(args, {"engagement_id"})
             return self.store.compare_intake(core.clean_text(args.get("engagement_id"), 64))
@@ -292,6 +335,10 @@ class ScopeRookTools(core.ScopeRookTools):
                 "phase": "existing tool handoff",
                 "tools": ["scoperook_list_tool_capabilities", "scoperook_route_existing_tools",
                           "scoperook_import_surface_artifact", "scoperook_get_surface_inventory"],
+            })
+            brief["phase_tools"].insert(3, {
+                "phase": "runtime proof design",
+                "tools": ["scoperook_set_validation_contract"],
             })
             return brief
         if name == "scoperook_work_queue":
@@ -339,6 +386,12 @@ class ScopeRookTools(core.ScopeRookTools):
             return self.registry.route(
                 phase=args.get("phase"), required_capabilities=args.get("required_capabilities"),
                 operation_class=args.get("operation_class"), engagement=engagement, plan_id=plan_id)
+        if name == "scoperook_search_integration_catalog":
+            core._only(args, {"query", "phase", "operation_class", "limit"})
+            return integration_catalog.search_catalog(
+                query=args.get("query", ""), phase=args.get("phase", ""),
+                operation_class=args.get("operation_class", ""), limit=args.get("limit", 10),
+            )
         if name == "scoperook_import_surface_artifact":
             core._only(args, {"engagement_id", "source_reference", "format", "asset"})
             ident = core.clean_text(args.get("engagement_id"), 64)

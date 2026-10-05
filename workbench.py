@@ -44,6 +44,7 @@ PLAN_DETAIL_FIELDS = (
     "affected_version", "prior_art_result", "remediation",
 )
 UNRESOLVED = re.compile(r"^(unknown|tbd|pending|not checked|not reviewed|unavailable)(\b|$)", re.I)
+VALIDATION_ENVIRONMENTS = {"offline_source", "synthetic_lab", "researcher_owned_runtime", "authorized_target"}
 
 
 def now() -> str:
@@ -346,6 +347,56 @@ class Store:
             item["updated_at"] = now()
             save_json(self._path(ident), item)
             return assessment
+
+    def set_validation_contract(self, ident: str, plan_id: str, values: dict) -> dict:
+        """Bind a hypothesis to explicit identity, state, sequence, control, and proof limits."""
+        with self.lock:
+            item = self.get(ident)
+            plan = next((entry for entry in item.get("plans", []) if entry.get("id") == plan_id), None)
+            if plan is None:
+                raise ValueError("Plan not found")
+            environment = values.get("environment")
+            if environment not in VALIDATION_ENVIRONMENTS:
+                raise ValueError("Unsupported validation environment")
+            steps = values.get("sequence_steps")
+            if (not isinstance(steps, list) or not 1 <= len(steps) <= 12
+                    or not all(isinstance(step, str) for step in steps)):
+                raise ValueError("sequence_steps must contain 1 to 12 text steps")
+            cleaned_steps = [clean_text(step, 300) for step in steps]
+            if len(set(cleaned_steps)) != len(cleaned_steps):
+                raise ValueError("sequence_steps must be unique")
+            max_requests = values.get("max_requests")
+            if type(max_requests) is not int or not 0 <= max_requests <= 100:
+                raise ValueError("max_requests must be an integer from 0 to 100")
+            if environment == "offline_source" and max_requests != 0:
+                raise ValueError("offline_source validation must use a zero request budget")
+            if environment in {"researcher_owned_runtime", "authorized_target"} and max_requests == 0:
+                raise ValueError("runtime validation requires a positive request budget")
+            contract = {
+                "environment": environment,
+                "asset": plan.get("asset"),
+                "candidate_actor": clean_text(values.get("candidate_actor"), 300),
+                "control_actor": clean_text(values.get("control_actor"), 300),
+                "starting_state": clean_text(values.get("starting_state"), 500),
+                "sequence_steps": cleaned_steps,
+                "expected_secure_behavior": clean_text(values.get("expected_secure_behavior"), 500),
+                "suspected_behavior": clean_text(values.get("suspected_behavior"), 500),
+                "negative_control": clean_text(values.get("negative_control"), 500),
+                "independent_impact_check": clean_text(values.get("independent_impact_check"), 500),
+                "cleanup": clean_text(values.get("cleanup"), 500),
+                "max_requests": max_requests,
+                "recorded_at": now(),
+                "execution_ready": False,
+                "execution_requirements": (
+                    "Use a separately approved executor bound to this exact contract"
+                    if environment == "authorized_target"
+                    else "Run only in the recorded researcher-controlled environment"
+                ),
+            }
+            plan["validation_contract"] = contract
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return contract
 
     def add_observation(self, ident: str, plan_id: str, values: dict) -> dict:
         with self.lock:

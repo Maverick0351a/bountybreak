@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 
+import integration_catalog
 from scoperook_daybreak_server import ScopeRookTools, TOOLS, handle
 from workbench import INTAKE_FIELDS
 
@@ -59,6 +60,7 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertIn("scoperook_search_exploitdb", names)
         self.assertIn("scoperook_query_osv_package", names)
         self.assertIn("scoperook_agent_brief", names)
+        self.assertIn("scoperook_set_validation_contract", names)
         self.assertIn("scoperook_work_queue", names)
         self.assertIn("scoperook_rank_candidates", names)
         self.assertIn("scoperook_review_candidate", names)
@@ -67,6 +69,7 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertIn("scoperook_run_synthetic_lab", names)
         self.assertIn("scoperook_register_tool_capability", names)
         self.assertIn("scoperook_route_existing_tools", names)
+        self.assertIn("scoperook_search_integration_catalog", names)
         self.assertIn("scoperook_import_surface_artifact", names)
         self.assertIn("scoperook_get_surface_inventory", names)
         self.assertIn("scoperook_compare_intake", names)
@@ -118,6 +121,88 @@ class ScopeRookMcpTests(unittest.TestCase):
         })
         self.assertFalse(target_route["execution_ready"])
         self.assertIn("Select an engagement", target_route["blockers"][0])
+
+        directory = Path(self.temp.name) / "package-directory"
+        directory.mkdir()
+        unavailable = self.tools.call("scoperook_register_tool_capability", {
+            "tool_id": "directory-cli", "display_name": "Directory CLI", "version": "1.0",
+            "interface": "local_cli", "phases": ["source_review"],
+            "capabilities": ["directory-only analysis"], "operation_classes": ["offline"],
+            "output_formats": ["json"], "local_path": str(directory),
+            "declared_available": True, "constraints": "Fixture",
+        })
+        self.assertFalse(unavailable["tool"]["available"])
+        self.assertIn("exact file", unavailable["tool"]["verification"])
+        unavailable_route = self.tools.call("scoperook_route_existing_tools", {
+            "phase": "source_review", "required_capabilities": ["directory-only analysis"],
+            "operation_class": "offline",
+        })
+        self.assertIsNone(unavailable_route["selected"])
+        self.assertFalse(unavailable_route["execution_ready"])
+        self.assertIn("No registered available tool", unavailable_route["blockers"][0])
+
+    def test_projectdiscovery_integration_catalog_is_guidance_only(self):
+        result = self.tools.call("scoperook_search_integration_catalog", {
+            "query": "template", "phase": "candidate_validation", "limit": 10,
+        })
+        ids = {item["id"] for item in result["integrations"]}
+        self.assertIn("projectdiscovery-nuclei", ids)
+        self.assertEqual(result["installation_state"], "not_checked")
+        self.assertIn("MIT-only", result["license_policy"])
+        self.assertIn("do not mean a tool is installed", result["boundary"])
+        self.assertTrue(all(item["license"] == "MIT" for item in result["integrations"]))
+        self.assertTrue(all("/blob/" in item["license_source"] for item in result["integrations"]))
+        nuclei = next(item for item in result["integrations"]
+                      if item["id"] == "projectdiscovery-nuclei")
+        self.assertIn("separate executor receipt", nuclei["required_gates"])
+
+        rejected_path = Path(self.temp.name) / "non-mit.json"
+        rejected = json.loads((Path(__file__).parents[1] / "integrations" /
+                               "projectdiscovery.json").read_text(encoding="utf-8"))
+        rejected["integrations"] = [dict(rejected["integrations"][0], license="GPL-3.0")]
+        rejected_path.write_text(json.dumps(rejected), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "MIT-only"):
+            integration_catalog.load_catalog(rejected_path)
+
+    def test_runtime_validation_contract_binds_identity_state_sequence_and_budget(self):
+        created, _gate, plan_result = self.create_candidate()
+        plan = plan_result["plan"]
+        result = self.tools.call("scoperook_set_validation_contract", {
+            "engagement_id": created["id"], "plan_id": plan["id"],
+            "environment": "researcher_owned_runtime",
+            "candidate_actor": "Researcher-controlled member",
+            "control_actor": "Researcher-controlled administrator",
+            "starting_state": "Both controlled accounts exist and the marker object belongs to the administrator",
+            "sequence_steps": ["Authenticate as the member", "Request the exact controlled marker object"],
+            "expected_secure_behavior": "The member receives a denial and no marker content",
+            "suspected_behavior": "The member receives the administrator marker",
+            "negative_control": "The administrator can read the same marker through the ordinary path",
+            "independent_impact_check": "Compare the returned marker hash without retaining response content",
+            "cleanup": "Delete the controlled marker and sign out both controlled sessions",
+            "max_requests": 3,
+        })["validation_contract"]
+        self.assertEqual(result["asset"], "https://app.example.invalid")
+        self.assertEqual(result["max_requests"], 3)
+        self.assertFalse(result["execution_ready"])
+        record = self.tools.call("scoperook_get_engagement", {
+            "engagement_id": created["id"],
+        })["engagement"]
+        self.assertEqual(record["plans"][0]["validation_contract"]["sequence_steps"],
+                         ["Authenticate as the member", "Request the exact controlled marker object"])
+        manifest = self.tools.call("scoperook_build_evidence_manifest", {
+            "engagement_id": created["id"], "plan_id": plan["id"], "save": False,
+        })["manifest"]
+        self.assertEqual(manifest["plan"]["validation_contract"]["max_requests"], 3)
+        with self.assertRaisesRegex(ValueError, "zero request budget"):
+            self.tools.call("scoperook_set_validation_contract", {
+                "engagement_id": created["id"], "plan_id": plan["id"],
+                "environment": "offline_source", "candidate_actor": "Static reviewer",
+                "control_actor": "Second reviewer", "starting_state": "Pinned local source",
+                "sequence_steps": ["Inspect the pinned file"],
+                "expected_secure_behavior": "Authorization is enforced", "suspected_behavior": "It is not",
+                "negative_control": "Inspect the guarded path", "independent_impact_check": "Trace the sink",
+                "cleanup": "No runtime state", "max_requests": 1,
+            })
 
     def test_synthetic_lab_catalog_is_bundled_and_fail_closed(self):
         result = self.tools.call("scoperook_list_synthetic_labs", {})
