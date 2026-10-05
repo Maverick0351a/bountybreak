@@ -349,6 +349,8 @@ class AppHandler(BaseHTTPRequestHandler):
                     result["exploration"] = logic_sandbox.explore(world)
                 self._json(200, result)
             elif route == ["api", "ai", "draft"]:
+                if self.server.model_port is None:
+                    raise ValueError("AI drafting is off. Restart ScopeRook with --model-port PORT to use a chosen local model.")
                 question = clean_text(payload.get("question"), 800)
                 raw_query = payload.get("prior_art_query", "")
                 if not isinstance(raw_query, str):
@@ -451,7 +453,7 @@ class AppHandler(BaseHTTPRequestHandler):
 class AppServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, store: Store, demo_port: int, model_port: int = 1234):
+    def __init__(self, address, store: Store, demo_port: int, model_port: int | None = None):
         super().__init__(address, AppHandler)
         self.store = store
         self.demo_port = demo_port
@@ -465,12 +467,12 @@ def main():
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--open", action="store_true", help="open the app in the default browser")
-    parser.add_argument("--model-port", type=int, default=1234,
-                        help="port of an optional OpenAI-compatible local model on 127.0.0.1")
+    parser.add_argument("--model-port", type=int,
+                        help="explicitly enable AI drafting with an OpenAI-compatible local model on 127.0.0.1")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error("port must be 1024–65535")
-    if not 1024 <= args.model_port <= 65535 or args.model_port == args.port:
+    if args.model_port is not None and (not 1024 <= args.model_port <= 65535 or args.model_port == args.port):
         parser.error("model port must be 1024–65535 and differ from the app port")
     demo = ThreadingHTTPServer(("127.0.0.1", 0), DemoHandler)
     demo.daemon_threads = True

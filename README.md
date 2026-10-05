@@ -10,13 +10,13 @@ On Windows, double-click `Start-ScopeRook.cmd`. On any supported system:
 python workbench.py --open
 ```
 
-The app binds to `http://127.0.0.1:8766/`. Close the launcher window or press Ctrl+C to stop it. Engagement JSON and the generated SQLite index live under `data/`, which Git ignores. To choose another data location, app port, or local model port:
+The app binds to `http://127.0.0.1:8766/`. Close the launcher window or press Ctrl+C to stop it. Engagement JSON and the generated SQLite index live under `data/`, which Git ignores. AI drafting is off by default. To choose another data location and app port:
 
 ```sh
-python workbench.py --data-dir /private/path --port 8767 --model-port 1234
+python workbench.py --data-dir /private/path --port 8767
 ```
 
-No installation, cloud account, Docker runtime, or scanner download is required. The AI feature requires a separate **OpenAI-compatible local model server** at `127.0.0.1:<model-port>` with `/v1/models` and `/v1/chat/completions`. Start your own server and load a model before using **AI assistant**. There is no cloud fallback, API key collection, automatic model download, or background prompt transfer. This is an API-compatible local model integration; it is not a ChatGPT plugin or OpenAI service integration.
+No installation, cloud account, Docker runtime, or scanner download is required. To enable **AI assistant**, start a model you chose on a separate **OpenAI-compatible local model server** with `/v1/models` and `/v1/chat/completions`, then explicitly launch ScopeRook with `--model-port PORT`. It connects only to `127.0.0.1:PORT` when you request a draft. Without that flag, the draft endpoint rejects requests and no model is contacted. There is no cloud fallback, API key collection, automatic model download, or background prompt transfer. This is an API-compatible local model integration; it is not a ChatGPT plugin or OpenAI service integration.
 
 ## Research workflow
 

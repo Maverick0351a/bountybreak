@@ -80,7 +80,11 @@ function renderAiEngagements() {
     option.value = item.id;
     select.append(option);
   }
-  $("#model-port").textContent = String(state.ai_port || 1234);
+  const enabled = Number.isInteger(state.ai_port);
+  $("#model-status").textContent = enabled
+    ? `Local AI enabled at 127.0.0.1:${state.ai_port}. The question and selected context go to that model.`
+    : "AI drafting is off. Restart ScopeRook with --model-port PORT after choosing a local model.";
+  $("#ai-form button.primary").disabled = !enabled;
 }
 
 function localAssets(item) {
@@ -197,7 +201,7 @@ $("#ai-form").addEventListener("submit", async (event) => {
     const sources = answer.prior_art.flatMap((item) => item.sources.map((source) => source.url));
     result.textContent = `${answer.draft}\n\nClassification: unverified · model: ${answer.model}${answer.sandbox_result ? ` · sandbox: ${answer.sandbox_result}` : ""}\nPrior-art sources:\n${sources.join("\n") || "No matching bundled record"}`;
   } catch (error) { result.textContent = error.message; }
-  finally { button.disabled = false; }
+  finally { button.disabled = !Number.isInteger(state.ai_port); }
 });
 
 async function openCase(id) {

@@ -222,6 +222,16 @@ class WorkbenchTests(unittest.TestCase):
             model.shutdown()
             model.server_close()
 
+    def test_ai_draft_is_off_without_explicit_model_port(self):
+        self.assertIsNone(self.app.model_port)
+        status, state = self.request("/api/state")
+        self.assertEqual(status, 200)
+        self.assertIsNone(state["ai_port"])
+        status, response = self.request("/api/ai/draft", "POST", {
+            "question": "What could I test in my own lab?"})
+        self.assertEqual(status, 400)
+        self.assertIn("AI drafting is off", response["error"])
+
 
 if __name__ == "__main__":
     unittest.main()
