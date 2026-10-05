@@ -1,6 +1,6 @@
 """Local capability registry and deterministic router for existing security tools.
 
-ScopeRook never executes a registered tool.  It records how a separate agent or
+BountyBreak never executes a registered tool.  It records how a separate agent or
 human can reach an installed capability, then recommends the smallest suitable
 handoff for the current workflow phase.  Target-facing handoffs always retain a
 separate preflight gate even when the engagement intake is complete.
@@ -197,7 +197,7 @@ class ToolRegistry:
             "tools": tools,
             "registry_path": str(self.path),
             "execution_boundary": (
-                "Registry entries are local handoff references. ScopeRook does not launch them, infer "
+                "Registry entries are local handoff references. BountyBreak does not launch them, infer "
                 "authorization, or send target traffic."
             ),
         }

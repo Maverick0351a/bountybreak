@@ -319,22 +319,22 @@ def agent_brief(records: list[dict], data_dir: Path, engagement_id: str = "", pl
         "waiting": queue["waiting"],
         "top_candidates": ranking["candidates"][:5],
         "phase_tools": [
-            {"phase": "scope", "tools": ["scoperook_get_engagement", "scoperook_set_intake"]},
-            {"phase": "research", "tools": ["scoperook_research_cve", "scoperook_search_exploitdb",
-                                               "scoperook_query_osv_package"]},
-            {"phase": "selection", "tools": ["scoperook_add_plan", "scoperook_set_candidate_assessment",
-                                                "scoperook_rank_candidates"]},
-            {"phase": "local validation", "tools": ["scoperook_simulate_hypothesis",
-                                                       "scoperook_run_synthetic_lab"]},
-            {"phase": "evidence", "tools": ["scoperook_record_observation",
-                                               "scoperook_review_candidate",
-                                               "scoperook_build_evidence_manifest"]},
-            {"phase": "report and outcome", "tools": ["scoperook_build_report",
-                                                         "scoperook_record_outcome"]},
+            {"phase": "scope", "tools": ["bountybreak_get_engagement", "bountybreak_set_intake"]},
+            {"phase": "research", "tools": ["bountybreak_research_cve", "bountybreak_search_exploitdb",
+                                               "bountybreak_query_osv_package"]},
+            {"phase": "selection", "tools": ["bountybreak_add_plan", "bountybreak_set_candidate_assessment",
+                                                "bountybreak_rank_candidates"]},
+            {"phase": "local validation", "tools": ["bountybreak_simulate_hypothesis",
+                                                       "bountybreak_run_synthetic_lab"]},
+            {"phase": "evidence", "tools": ["bountybreak_record_observation",
+                                               "bountybreak_review_candidate",
+                                               "bountybreak_build_evidence_manifest"]},
+            {"phase": "report and outcome", "tools": ["bountybreak_build_report",
+                                                         "bountybreak_record_outcome"]},
         ],
         "execution_boundary": (
             "Daybreak Blue is used for defensive discovery, triage, source review, synthetic validation, "
             "evidence, and remediation. Live target traffic requires a separate current authorization gate "
-            "and executor; ScopeRook does not infer permission or expose a generic shell."
+            "and executor; BountyBreak does not infer permission or expose a generic shell."
         ),
     }

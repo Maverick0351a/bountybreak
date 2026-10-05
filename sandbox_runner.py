@@ -23,7 +23,7 @@ import uuid
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
-TAG_RE = re.compile(r"^SCOPEROOK_(EXIT|STDOUT_B64|STDERR_B64)=(.*)$")
+TAG_RE = re.compile(r"^BOUNTYBREAK_(EXIT|STDOUT_B64|STDERR_B64)=(.*)$")
 MAX_CAPTURE_BYTES = 65_536
 MAX_MANIFEST_BYTES = 65_536
 REQUIRED_BINARIES = (
@@ -269,7 +269,7 @@ class LabRunner:
         except subprocess.TimeoutExpired as exc:
             subprocess.run(
                 [self.wsl, "-d", self.distro, "-u", "root", "--", "/usr/bin/pkill", "-KILL", "-f",
-                 f"scoperook-sandbox-{token}"],
+                 f"bountybreak-sandbox-{token}"],
                 capture_output=True, timeout=5, check=False,
             )
             raise SandboxError("Sandbox host timeout; the isolated process was stopped") from exc

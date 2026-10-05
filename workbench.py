@@ -860,7 +860,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 self._json(200, result)
             elif route == ["api", "ai", "draft"]:
                 if self.server.model_port is None:
-                    raise ValueError("AI drafting is off. Restart ScopeRook with --model-port PORT to use a chosen local model.")
+                    raise ValueError("AI drafting is off. Restart BountyBreak with --model-port PORT to use a chosen local model.")
                 question = clean_text(payload.get("question"), 800)
                 raw_query = payload.get("prior_art_query", "")
                 if not isinstance(raw_query, str):
@@ -973,7 +973,7 @@ class AppServer(ThreadingHTTPServer):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ScopeRook local security research desk")
+    parser = argparse.ArgumentParser(description="BountyBreak local security research desk")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--open", action="store_true", help="open the app in the default browser")
@@ -988,7 +988,7 @@ def main():
     demo.daemon_threads = True
     threading.Thread(target=demo.serve_forever, daemon=True).start()
     app = AppServer(("127.0.0.1", args.port), Store(args.data_dir), demo.server_port, args.model_port)
-    print(f"ScopeRook: http://127.0.0.1:{app.server_port}/", flush=True)
+    print(f"BountyBreak: http://127.0.0.1:{app.server_port}/", flush=True)
     if args.open:
         threading.Timer(0.4, webbrowser.open, args=(f"http://127.0.0.1:{app.server_port}/",)).start()
     try:

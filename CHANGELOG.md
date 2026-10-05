@@ -1,8 +1,16 @@
 # Changelog
 
-All notable ScopeRook changes are recorded here.
+All notable BountyBreak changes are recorded here.
 
 ## [Unreleased]
+
+## [0.8.2] - 2026-10-05
+
+- Renamed the product from ScopeRook to BountyBreak with an original horizon-and-target mark and a midnight/electric-blue interface.
+- Moved a centered three-step Quickstart to the top of the README and dashboard so the first successful run is immediately visible.
+- Changed the primary MCP namespace, resources, prompts, entry points, and release artifacts to `bountybreak`.
+- Preserved the former `scoperook_*` calls and entry-point filenames as documented 0.8-line migration aliases.
+- Kept Daybreak Blue as descriptive compatibility language while making the product's independent status explicit.
 
 ## [0.8.1] - 2026-10-05
 
@@ -38,11 +46,12 @@ All notable ScopeRook changes are recorded here.
 
 - Initial local dashboard, public exploit-intelligence index, symbolic sandbox, optional local-model adapter, and bounded loopback lab check.
 
-[Unreleased]: https://github.com/Maverick0351a/scoperook/compare/v0.8.1...HEAD
-[0.8.1]: https://github.com/Maverick0351a/scoperook/compare/v0.8.0...v0.8.1
-[0.8.0]: https://github.com/Maverick0351a/scoperook/compare/v0.2.3...v0.8.0
-[0.2.3]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.3
-[0.2.2]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.2
-[0.2.1]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.1
-[0.2.0]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.2.0
-[0.1.0]: https://github.com/Maverick0351a/scoperook/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/Maverick0351a/bountybreak/compare/v0.2.3...v0.8.0
+[0.2.3]: https://github.com/Maverick0351a/bountybreak/releases/tag/v0.2.3
+[0.2.2]: https://github.com/Maverick0351a/bountybreak/releases/tag/v0.2.2
+[0.2.1]: https://github.com/Maverick0351a/bountybreak/releases/tag/v0.2.1
+[0.2.0]: https://github.com/Maverick0351a/bountybreak/releases/tag/v0.2.0
+[0.1.0]: https://github.com/Maverick0351a/bountybreak/releases/tag/v0.1.0

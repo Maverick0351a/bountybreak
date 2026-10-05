@@ -1,16 +1,16 @@
 name: Bug report
-description: Report a reproducible ScopeRook defect without including bounty or credential data.
+description: Report a reproducible BountyBreak defect without including bounty or credential data.
 title: "[Bug]: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping improve ScopeRook. Remove program-private text, credentials, session material, customer data, exploit payloads, and target evidence before posting.
+        Thanks for helping improve BountyBreak. Remove program-private text, credentials, session material, customer data, exploit payloads, and target evidence before posting.
   - type: input
     id: version
     attributes:
-      label: ScopeRook version or commit
+      label: BountyBreak version or commit
       placeholder: v0.8.0 or commit SHA
     validations:
       required: true
@@ -48,7 +48,7 @@ body:
       label: Minimal reproduction
       description: Use synthetic or redacted data only.
       placeholder: |
-        1. Start ScopeRook with ...
+        1. Start BountyBreak with ...
         2. Create a synthetic engagement ...
         3. Observe ...
     validations:

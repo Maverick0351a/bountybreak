@@ -1,6 +1,6 @@
 # Contributing
 
-ScopeRook welcomes focused contributions that improve continuous, authorized bounty research without weakening its boundaries.
+BountyBreak welcomes focused contributions that improve continuous, authorized bounty research without weakening its boundaries.
 
 ## Before coding
 
@@ -8,11 +8,11 @@ Open a feature request for substantial changes. Describe the operator problem, t
 
 ## Local validation
 
-ScopeRook requires Python 3.11 or newer and has no runtime package dependency.
+BountyBreak requires Python 3.11 or newer and has no runtime package dependency.
 
 ```sh
 python -m unittest discover -s tests -v
-python -m py_compile agent_workflow.py ai_local.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py scoperook_daybreak_server.py scoperook_mcp.py surface_import.py tool_router.py workbench.py
+python -m py_compile agent_workflow.py ai_local.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py bountybreak_daybreak_server.py bountybreak_mcp.py surface_import.py tool_router.py workbench.py
 ```
 
 Use temporary or synthetic data. Never commit the `data/` directory, credentials, private program briefs, customer records, session material, live target evidence, or unredacted traffic captures.

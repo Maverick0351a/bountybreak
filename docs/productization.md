@@ -1,10 +1,10 @@
-# ScopeRook product and pricing outline
+# BountyBreak product and pricing outline
 
 ## Position
 
-ScopeRook should sell as the **local bug bounty operating layer for Daybreak Blue**. Daybreak Blue provides the security reasoning; ScopeRook provides the durable target portfolio, authorization state, public intelligence, validation contract, evidence chain, reporting state, and outcome history that make repeated bounty work practical.
+BountyBreak should sell as the **local bug bounty operating layer for Daybreak Blue**. Daybreak Blue provides the security reasoning; BountyBreak provides the durable target portfolio, authorization state, public intelligence, validation contract, evidence chain, reporting state, and outcome history that make repeated bounty work practical.
 
-The product should sell workflow quality and continuity rather than model access. Customers bring their own approved Codex workspace or API project; ScopeRook does not bundle, proxy, resell, or collect access credentials for Daybreak Blue. It should not sell a promise to find bounties, access to exploit code, or unrestricted target automation.
+The product should sell workflow quality and continuity rather than model access. Customers bring their own approved Codex workspace or API project; BountyBreak does not bundle, proxy, resell, or collect access credentials for Daybreak Blue. It should not sell a promise to find bounties, access to exploit code, or unrestricted target automation.
 
 The useful differentiator is a local-first continuous hunting record: a Daybreak Blue user can choose a target, resume the exact unfinished lane, avoid repeating old work, preserve scope revisions and evidence, and learn from triage and financial outcomes. An optional bring-your-own-cloud sandbox can later run only reviewed synthetic fixtures in the customer's cloud account.
 
@@ -21,7 +21,7 @@ After validation:
 | Team | $49/user/month, three-seat minimum | Shared policy packs, role controls, centralized audit records, reusable team labs, support, and organization billing |
 | Enterprise | Custom | Self-hosted control plane, SSO, retention controls, deployment review, procurement, and support commitments |
 
-Cloud compute is separate. With BYOC, the customer pays Oracle directly and ScopeRook charges for orchestration. If managed compute is added later, include a small monthly allowance and require explicit top-ups with a hard spending cap. Never silently pass through uncapped usage.
+Cloud compute is separate. With BYOC, the customer pays Oracle directly and BountyBreak charges for orchestration. If managed compute is added later, include a small monthly allowance and require explicit top-ups with a hard spending cap. Never silently pass through uncapped usage.
 
 ## Pricing rules
 
@@ -52,4 +52,4 @@ Verified from official product pages on 2026-10-04:
 - ProjectDiscovery Neo starts at **$200 per seat per month** for recurring agentic testing and also offers limited one-time free usage: https://projectdiscovery.io/pricing
 - Burp Suite Professional advertises **$499** and Burp AT is currently a public beta whose individual page does not publish a separate numeric price: https://portswigger.net/burp/pro and https://portswigger.net/burp/burp-at/pricing
 
-ScopeRook's proposed $19 price is therefore plausible for an independent-researcher workflow layer, but the comparison does not prove willingness to pay. The product must first show that its evidence and selection workflow saves time or improves report completeness for outside researchers.
+BountyBreak's proposed $19 price is therefore plausible for an independent-researcher workflow layer, but the comparison does not prove willingness to pay. The product must first show that its evidence and selection workflow saves time or improves report completeness for outside researchers.

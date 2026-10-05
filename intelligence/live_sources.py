@@ -29,7 +29,7 @@ def _fetch_json(url: str) -> dict:
     cached = _CACHE.get(url)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
-    request = Request(url, headers={"Accept": "application/json", "User-Agent": "ScopeRook/0.3"})
+    request = Request(url, headers={"Accept": "application/json", "User-Agent": "BountyBreak/0.3"})
     try:
         with urlopen(request, timeout=12) as response:
             final = urlsplit(response.geturl())

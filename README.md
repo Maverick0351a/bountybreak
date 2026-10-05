@@ -1,31 +1,37 @@
 <p align="center">
-  <img src="static/brand.svg" width="96" alt="ScopeRook logo">
+  <img src="static/brand.svg" width="96" alt="BountyBreak logo">
 </p>
 
-<h1 align="center">ScopeRook for Daybreak Blue</h1>
+<h1 align="center">BountyBreak</h1>
 
-<p align="center"><strong>Scope first. Proof always.</strong></p>
-
-<p align="center">
-  The local-first bug bounty operating layer built for Daybreak Blue.
-</p>
+<p align="center"><strong>Bug bounty operations for approved Daybreak Blue workflows.</strong></p>
 
 <p align="center">
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Maverick0351a/scoperook/ci.yml?branch=main&label=tests">
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Maverick0351a/bountybreak/ci.yml?branch=main&label=tests">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-f0444f">
-  <img alt="Built for Daybreak Blue" src="https://img.shields.io/badge/built%20for-Daybreak%20Blue-b64956">
-  <img alt="Local first" src="https://img.shields.io/badge/data-local--first-25171d">
-  <img alt="Version 0.8.1" src="https://img.shields.io/badge/version-0.8.1-b64956">
+  <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-2d8cff">
+  <img alt="Designed for approved Daybreak Blue workflows" src="https://img.shields.io/badge/designed%20for-approved%20Daybreak%20Blue-1769aa">
+  <img alt="Local first" src="https://img.shields.io/badge/data-local--first-07111f">
+  <img alt="Version 0.8.2" src="https://img.shields.io/badge/version-0.8.2-2d8cff">
 </p>
 
-![ScopeRook dashboard](docs/assets/scoperook-overview.png)
+<h2 align="center">Quickstart</h2>
 
-Daybreak Blue supplies the security reasoning. ScopeRook supplies the durable operating context around it: target selection, current scope, exact assets, coverage history, public vulnerability intelligence, candidate economics, validation contracts, evidence integrity, concise reporting, triage state, costs, time, and received cash. It keeps that state on the researcher's computer and returns one explainable next action when work resumes.
+<div align="center">
+
+| 1. Start | 2. Connect | 3. Resume |
+|---|---|---|
+| `python workbench.py --open` | `codex mcp add bountybreak -- python C:/path/to/bountybreak/bountybreak_daybreak_server.py --data-dir C:/private/bountybreak-data --sandbox-distro Ubuntu` | Ask Daybreak Blue to open the BountyBreak portfolio and return the next bounded action. |
+
+</div>
+
+![BountyBreak dashboard](docs/assets/bountybreak-overview.png)
+
+BountyBreak supplies the durable operating context around an approved Daybreak Blue workflow: target selection, current scope, exact assets, coverage history, public vulnerability intelligence, candidate economics, validation contracts, evidence integrity, concise reporting, triage state, costs, time, and received cash. It keeps that state on the researcher's computer and returns one explainable next action when work resumes.
 
 It does **not** scan targets, run arbitrary commands, hold credentials, or submit reports. Target-facing execution remains a separate, explicitly authorized step.
 
-ScopeRook is an independent product built to work with Daybreak Blue through an approved Codex workspace or API project. It does not bundle, proxy, resell, or provide access to Daybreak Blue and is not affiliated with or endorsed by OpenAI.
+BountyBreak is an independent product designed for approved Daybreak Blue workflows through a Codex workspace or API project. It does not bundle, proxy, resell, or provide access to Daybreak Blue and is not affiliated with or endorsed by OpenAI.
 
 | Resume without reconstruction | Fail closed on stale scope | Prove only what happened |
 |---|---|---|
@@ -33,29 +39,31 @@ ScopeRook is an independent product built to work with Daybreak Blue through an 
 
 ## Start the local dashboard
 
-ScopeRook uses the Python 3.11+ standard library. No package install, cloud account, Docker runtime, scanner download, or model is required.
+BountyBreak uses the Python 3.11+ standard library. No package install, cloud account, Docker runtime, scanner download, or model is required.
 
 ```sh
 python workbench.py --open
 ```
 
-On Windows, double-click `Start-ScopeRook.cmd`. The app binds to `http://127.0.0.1:8766/` and stores local records under the Git-ignored `data/` directory. Choose another private data directory when needed:
+On Windows, double-click `Start-BountyBreak.cmd`. The app binds to `http://127.0.0.1:8766/` and stores local records under the Git-ignored `data/` directory. Choose another private data directory when needed:
 
 ```sh
-python workbench.py --data-dir C:/private/scoperook-data --port 8767
+python workbench.py --data-dir C:/private/bountybreak-data --port 8767
 ```
 
-AI drafting is off by default. An optional OpenAI-compatible local model can be selected explicitly with `--model-port PORT`; ScopeRook connects only to `127.0.0.1:PORT` for a requested draft. There is no cloud fallback, API-key collection, automatic model download, or background prompt transfer.
+AI drafting is off by default. An optional OpenAI-compatible local model can be selected explicitly with `--model-port PORT`; BountyBreak connects only to `127.0.0.1:PORT` for a requested draft. There is no cloud fallback, API-key collection, automatic model download, or background prompt transfer.
 
 ## Connect Daybreak Blue
 
-`scoperook_daybreak_server.py` is the primary dependency-free stdio MCP server for the Daybreak Blue workflow. Register it in Codex with an explicit Python executable, repository path, private data directory, and optional WSL distribution for reviewed synthetic labs:
+`bountybreak_daybreak_server.py` is the primary dependency-free stdio MCP server for the Daybreak Blue workflow. Register it in Codex with an explicit Python executable, repository path, private data directory, and optional WSL distribution for reviewed synthetic labs:
 
 ```sh
-codex mcp add scoperook -- python C:/path/to/scoperook/scoperook_daybreak_server.py --data-dir C:/private/scoperook-data --sandbox-distro Ubuntu
+codex mcp add bountybreak -- python C:/path/to/bountybreak/bountybreak_daybreak_server.py --data-dir C:/private/bountybreak-data --sandbox-distro Ubuntu
 ```
 
-Other stdio MCP clients can use the same command and arguments, while `scoperook_mcp.py` remains a smaller compatibility server. ScopeRook's product experience and prompts are optimized for Daybreak Blue.
+Other stdio MCP clients can use the same command and arguments, while `bountybreak_mcp.py` remains a smaller compatibility server. BountyBreak's product experience and prompts are optimized for Daybreak Blue.
+
+Version 0.8.2 lists the `bountybreak_*` tool namespace. Existing `scoperook_*` calls and the former entry-point filenames remain accepted through the 0.8 release line for migration.
 
 The primary server exposes compact tools, resources, and prompts for:
 
@@ -92,13 +100,13 @@ flowchart LR
     N --> A
 ```
 
-The agent starts with `scoperook_hunt_portfolio`, loads the selected target with `scoperook_get_target_history`, `scoperook_get_engagement`, and `scoperook_agent_brief`, then follows the returned next action. Every completed pass records its coverage lane, result, request accounting, human time, cost, next action, and revisit date. Missing values remain unknown instead of becoming zero.
+The agent starts with `bountybreak_hunt_portfolio`, loads the selected target with `bountybreak_get_target_history`, `bountybreak_get_engagement`, and `bountybreak_agent_brief`, then follows the returned next action. Every completed pass records its coverage lane, result, request accounting, human time, cost, next action, and revisit date. Missing values remain unknown instead of becoming zero.
 
 The Daybreak Blue profile is designed for defensive discovery, source review, vulnerability triage, threat modeling, synthetic validation, evidence reduction, remediation, and patch verification. Daybreak access is not bundled, proxied, or resold; users bring their own approved Codex workspace or API access.
 
 ## Safety and evidence boundaries
 
-ScopeRook is deliberately split from live execution:
+BountyBreak is deliberately split from live execution:
 
 - program URLs, assets, restrictions, rate ceilings, identities, and safe-harbor terms are target-specific and time-sensitive;
 - unknown material authorization values keep the affected action blocked;
@@ -114,7 +122,7 @@ The web app requires an exact loopback Host, matching Origin, and CSRF token for
 
 ## Public intelligence and integrations
 
-The bundled seed index contains four records backed by direct primary sources at the time of publication. Live tools reduce fixed public feeds to reference metadata with response ceilings and in-memory caches. Social or Telegram sightings from CIRCL remain leads until a primary source confirms them. ScopeRook never downloads or executes proof-of-concept code.
+The bundled seed index contains four records backed by direct primary sources at the time of publication. Live tools reduce fixed public feeds to reference metadata with response ceilings and in-memory caches. Social or Telegram sightings from CIRCL remain leads until a primary source confirms them. BountyBreak never downloads or executes proof-of-concept code.
 
 The local Nuclei importer retains identity, severity, authors, references, CVE/CWE/CVSS fields, product metadata, protocols, methods, source hash, declared upstream commit, and risk flags. It discards request bodies, raw requests, payload values, matchers, extractors, and executable code. Catalog admission is MIT-only and records the reviewed upstream license; executors remain separately installed and separately authorized.
 
@@ -124,7 +132,7 @@ See [ProjectDiscovery integrations](docs/projectdiscovery-integrations.md) and t
 
 ```sh
 python -m unittest discover -s tests -v
-python -m py_compile workbench.py scoperook_daybreak_server.py scoperook_mcp.py
+python -m py_compile workbench.py bountybreak_daybreak_server.py bountybreak_mcp.py
 ```
 
 The suite covers the web API, portfolio/history behavior, a 100-target and 5,000-session scale trial, malformed legacy records, Nuclei metadata reduction, local-model isolation, live-source reduction, surface imports, evidence gates, synthetic controls, request budgets, redirect stops, and Host/Origin/CSRF boundaries.
@@ -134,7 +142,7 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 - [Continuous hunting model](docs/continuous-hunting.md)
 - [Launch readiness and beta gates](docs/launch-readiness.md)
 - [Release process](docs/release-process.md)
-- [ScopeRook 0.8.1 release notes](docs/releases/v0.8.1.md)
+- [BountyBreak 0.8.2 release notes](docs/releases/v0.8.2.md)
 - [Competitive analysis](docs/competitive-analysis.md)
 - [Productization and pricing](docs/productization.md)
 - [Oracle sandbox plan](docs/oracle-sandbox-plan.md)
@@ -143,8 +151,8 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 ## Status and license
 
-ScopeRook 0.8.1 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. ScopeRook does not promise accepted reports or income.
+BountyBreak 0.8.2 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. BountyBreak does not promise accepted reports or income.
 
 The community core is licensed under the [Apache License 2.0](LICENSE). Future hosted, collaboration, support, and commercial components may be offered separately.
 
-ScopeRook is an independent project. OpenAI, Codex, and Daybreak Blue names belong to their respective owners; their use here describes compatibility and the intended workflow.
+BountyBreak is an independent project. OpenAI, Codex, and Daybreak Blue names belong to their respective owners; their use here describes compatibility and the intended workflow.

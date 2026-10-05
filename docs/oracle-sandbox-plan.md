@@ -2,13 +2,13 @@
 
 ## Decision
 
-Keep the local WSL backend as ScopeRook's default. Add Oracle Cloud Infrastructure only as an optional, explicitly configured backend for reviewed synthetic fixtures that need more memory, a clean Linux image, or native build tooling. No bounty target, account credential, private program text, or customer data belongs in this backend.
+Keep the local WSL backend as BountyBreak's default. Add Oracle Cloud Infrastructure only as an optional, explicitly configured backend for reviewed synthetic fixtures that need more memory, a clean Linux image, or native build tooling. No bounty target, account credential, private program text, or customer data belongs in this backend.
 
 The first useful OCI worker is an ephemeral user-mode application sandbox. It is not suitable for kernel, hypervisor, firmware, malware-detonation, availability, or sandbox-escape testing.
 
 ## Account boundary
 
-Create a dedicated `scoperook-labs` compartment. ScopeRook must never receive tenancy-admin credentials. The controller may create, inspect, and terminate only the worker resources in that compartment. The worker identity may read one immutable input object and write one result object; it cannot manage IAM, networking, Compute, or other objects.
+Create a dedicated `bountybreak-labs` compartment. BountyBreak must never receive tenancy-admin credentials. The controller may create, inspect, and terminate only the worker resources in that compartment. The worker identity may read one immutable input object and write one result object; it cannot manage IAM, networking, Compute, or other objects.
 
 Do not run fixtures inside OCI Cloud Shell. Cloud Shell is pre-authenticated to the tenancy and has persistent storage in the home region. It is suitable for a human to launch or destroy the isolated worker, not for executing untrusted fixture code.
 
@@ -50,6 +50,6 @@ The initial deployment should be human-launched from OCI Cloud Shell or the Cons
 - A dedicated compartment, quota, private subnet, and restricted IAM policies have been reviewed.
 - The user approves any paid shape and maximum spend before it is launched.
 - A harmless fixture completes, cleanup is independently verified, and the account audit log matches the expected lifecycle.
-- Only then may the OCI backend be exposed as a ScopeRook MCP tool.
+- Only then may the OCI backend be exposed as a BountyBreak MCP tool.
 
-Until these gates pass, OCI remains a documented design and ScopeRook makes no Oracle API calls.
+Until these gates pass, OCI remains a documented design and BountyBreak makes no Oracle API calls.

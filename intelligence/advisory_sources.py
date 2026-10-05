@@ -72,7 +72,7 @@ def _request_bytes(url: str, *, method: str = "GET", body: bytes = b"",
     cached = _CACHE.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
-    headers = {"Accept": "application/json", "User-Agent": "ScopeRook/0.4"}
+    headers = {"Accept": "application/json", "User-Agent": "BountyBreak/0.8"}
     if parsed.hostname == "api.github.com":
         headers.update({"X-GitHub-Api-Version": "2022-11-28", "Accept": "application/vnd.github+json"})
     if content_type:
@@ -363,7 +363,7 @@ def search_exploitdb(*, query: str = "", cve_id: str = "", limit: int = 10,
         "interpretation": (
             "Exploit-DB results are metadata leads only. Verified means Exploit-DB reviewed the entry; it does "
             "not prove target applicability, bounty eligibility, safety, or successful exploitation. "
-            "ScopeRook does not fetch the exploit file."
+            "BountyBreak does not fetch the exploit file."
         ),
     }
 
@@ -444,7 +444,7 @@ def research_cve(cve_id: str, *, providers: dict[str, Callable[[str], dict]] | N
         "exploitdb_metadata": lambda ident: search_exploitdb(cve_id=ident, limit=10),
     }
     results: dict[str, dict] = {}
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="scoperook-intel") as pool:
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="bountybreak-intel") as pool:
         pending = {pool.submit(function, cve_id): name for name, function in providers.items()}
         for future in as_completed(pending):
             name = pending[future]

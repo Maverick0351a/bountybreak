@@ -2,9 +2,9 @@
 
 ## Current decision
 
-Continue private development and a small researcher beta. Do not launch a paid public product yet. ScopeRook is positioned as the independent bug bounty operating layer for Daybreak Blue. The continuous target portfolio, history, public intelligence, sanitized imports, and evidence controls form a credible product core, but distribution, sensitive-value handling, executor receipts, corpus testing, and outside validation remain material launch blockers.
+Continue private development and a small researcher beta. Do not launch a paid public product yet. BountyBreak is positioned as the independent bug bounty operating layer for Daybreak Blue. The continuous target portfolio, history, public intelligence, sanitized imports, and evidence controls form a credible product core, but distribution, sensitive-value handling, executor receipts, corpus testing, and outside validation remain material launch blockers.
 
-ScopeRook must be sold as an operating layer that helps researchers choose, document, resume, and support authorized bounty work. It must not promise accepted findings or income.
+BountyBreak must be sold as an operating layer that helps researchers choose, document, resume, and support authorized bounty work. It must not promise accepted findings or income.
 
 ## Implemented product core
 
@@ -33,7 +33,7 @@ ScopeRook must be sold as an operating layer that helps researchers choose, docu
 
 The repository now has a concise product front page, real dashboard and social-preview assets, a security policy, contribution and conduct guidance, structured issue forms, a pull-request checklist, release notes, and pinned cross-platform CI for Python 3.11 and 3.12. The 100-target and 5,000-session portfolio gate passes, along with 45 unit tests.
 
-The Apache-2.0 community-core license is selected. Build and test the exact v0.8.1 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
+The Apache-2.0 community-core license is selected. Build and test the exact v0.8.2 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
 
 ## Beta success gates
 

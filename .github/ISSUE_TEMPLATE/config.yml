@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Sensitive security report
-    url: https://github.com/Maverick0351a/scoperook/security/advisories/new
-    about: Privately report a vulnerability in ScopeRook itself. Do not submit bounty-target findings here.
+    url: https://github.com/Maverick0351a/bountybreak/security/advisories/new
+    about: Privately report a vulnerability in BountyBreak itself. Do not submit bounty-target findings here.

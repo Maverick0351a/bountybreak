@@ -1,6 +1,6 @@
 # Continuous hunting model
 
-ScopeRook treats each bounty target as a durable engagement rather than a temporary chat. The engagement keeps the current program intake, exact assets, target profile, asset context, coverage sessions, candidates, evidence, reports, outcomes, and sanitized research artifacts. Dated revisions preserve how the record changed without widening authorization automatically.
+BountyBreak treats each bounty target as a durable engagement rather than a temporary chat. The engagement keeps the current program intake, exact assets, target profile, asset context, coverage sessions, candidates, evidence, reports, outcomes, and sanitized research artifacts. Dated revisions preserve how the record changed without widening authorization automatically.
 
 ## What the agent records
 
@@ -24,11 +24,11 @@ The session records its environment, result, short summary, candidate links, sou
 
 ## Resume flow
 
-1. Call `scoperook_hunt_portfolio` to see every target's documentation state, policy age, coverage, candidate state, outcomes, recorded cost and time, and deterministic next action.
-2. Read `scoperook_get_target_history` for the selected target. Detailed snapshots are opt-in, and pagination bounds the returned context.
-3. Read the full engagement and `scoperook_agent_brief` only for that target.
+1. Call `bountybreak_hunt_portfolio` to see every target's documentation state, policy age, coverage, candidate state, outcomes, recorded cost and time, and deterministic next action.
+2. Read `bountybreak_get_target_history` for the selected target. Detailed snapshots are opt-in, and pagination bounds the returned context.
+3. Read the full engagement and `bountybreak_agent_brief` only for that target.
 4. Refresh any stale or incomplete policy record before target traffic. The portfolio's default 14-day freshness window is an administrative reminder; it is not authorization and programs may require a shorter window.
-5. Perform one bounded pass, save observations and candidate decisions, then close the pass with `scoperook_record_hunt_session`.
+5. Perform one bounded pass, save observations and candidate decisions, then close the pass with `bountybreak_record_hunt_session`.
 6. Return to the portfolio for the next target or the recorded revisit date.
 
 The portfolio ranks active targets by explicit priority, readiness, required administrative work, and oldest activity. It does not predict acceptance, bounty value, or vulnerability presence. A target stays visible when blocked, paused, or closed so the agent does not repeat old work or lose outcome history.

@@ -1,6 +1,6 @@
 # Community conduct
 
-ScopeRook's community is for careful, authorized security research. Be direct, respectful, and evidence-led.
+BountyBreak's community is for careful, authorized security research. Be direct, respectful, and evidence-led.
 
 ## Expected conduct
 

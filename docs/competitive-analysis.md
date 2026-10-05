@@ -4,15 +4,15 @@ Reviewed 2026-10-04 from product documentation and public repositories.
 
 ## What existing products prove
 
-| Product | What it does well | Gap ScopeRook can own |
+| Product | What it does well | Gap BountyBreak can own |
 | --- | --- | --- |
 | Burp AT | Gives agents Burp tools and project context, smart approvals, recorded requests, and governance outside the model | Built around Burp and general pentesting; it does not center bug-bounty program policy, duplicate economics, acceptance evidence, or payouts |
 | ProjectDiscovery Neo | Continuous multi-agent testing, shared context, isolated managed or self-hosted sandboxes, integrations, revalidation, and remediation workflow | Enterprise attack-surface and remediation platform; not a local, researcher-owned bounty ledger or program-specific triage assistant |
-| Strix | Strong self-hosted active testing, code and URL context, Docker isolation, skills, proof generation, retesting, and fixes | Competes in autonomous exploitation; ScopeRook should avoid being another shell-and-scanner wrapper and instead govern selection, evidence, and triage |
+| Strix | Strong self-hosted active testing, code and URL context, Docker isolation, skills, proof generation, retesting, and fixes | Competes in autonomous exploitation; BountyBreak should avoid being another shell-and-scanner wrapper and instead govern selection, evidence, and triage |
 | PentestGPT | Staged recon-to-report pipeline, session persistence, Codex and Claude backends, broad lab categories | General pentest and CTF agent; limited bounty-policy, evidence-integrity, duplicate-risk, and financial feedback structure |
-| BugBounty MCP Server | Broad 53-tool coverage, typed schemas, scope enforcement, active reconnaissance, evidence integrity, reports, resources, and prompts | Large tool surface and generic assessment model; ScopeRook can be more compact, policy-led, Daybreak-oriented, and outcome-aware |
-| BountyProof MCP | Clear session-to-preflight-to-discovery-to-verification-to-evidence pipeline; HAR/OpenAPI/Postman import; role comparisons | Strong direct competitor. ScopeRook's differentiators must be current vulnerability intelligence, candidate economics, mandatory negative controls, local synthetic labs, triage outcomes, and BYOC compute |
-| bb-mcp-server | Local sensitive-value vault, hash-chained validation gate, separate validator, agent-visible safe tokens | ScopeRook still needs an equivalent private artifact import and value-tokenization layer before it can claim best-in-class handling of authenticated testing data |
+| BugBounty MCP Server | Broad 53-tool coverage, typed schemas, scope enforcement, active reconnaissance, evidence integrity, reports, resources, and prompts | Large tool surface and generic assessment model; BountyBreak can be more compact, policy-led, Daybreak-oriented, and outcome-aware |
+| BountyProof MCP | Clear session-to-preflight-to-discovery-to-verification-to-evidence pipeline; HAR/OpenAPI/Postman import; role comparisons | Strong direct competitor. BountyBreak's differentiators must be current vulnerability intelligence, candidate economics, mandatory negative controls, local synthetic labs, triage outcomes, and BYOC compute |
+| bb-mcp-server | Local sensitive-value vault, hash-chained validation gate, separate validator, agent-visible safe tokens | BountyBreak still needs an equivalent private artifact import and value-tokenization layer before it can claim best-in-class handling of authenticated testing data |
 | HexStrike-style MCPs | Very broad installed tool coverage and immediate offensive utility | Huge tool catalogs, generic command paths, dependencies, and context overhead make them harder to govern and easier for an agent to misuse |
 
 Primary references:
@@ -27,7 +27,7 @@ Primary references:
 
 ## Product position
 
-ScopeRook should be the **bug-bounty operating layer for Daybreak Blue**, rather than another agent or scanner. It should make Daybreak consistently answer five questions before spending requests:
+BountyBreak should be the **bug-bounty operating layer for Daybreak Blue**, rather than another agent or scanner. It should make Daybreak consistently answer five questions before spending requests:
 
 1. Is this exact activity authorized now?
 2. What concrete attacker payoff could the program reward?
@@ -39,9 +39,9 @@ Its moat is the connected record from policy to candidate, control, evidence has
 
 ## Daybreak Blue fit
 
-The product must not bundle, resell, proxy, or provide downstream access to Daybreak. Each customer uses ScopeRook as a local stdio MCP from their own approved Codex workspace or API project. ScopeRook does not collect the customer's OpenAI credentials.
+The product must not bundle, resell, proxy, or provide downstream access to Daybreak. Each customer uses BountyBreak as a local stdio MCP from their own approved Codex workspace or API project. BountyBreak does not collect the customer's OpenAI credentials.
 
-Daybreak Blue is a strong fit for secure code review, vulnerability discovery and triage, threat modeling, synthetic validation, evidence reduction, remediation, and patch verification. Advanced live testing and exploit-chain validation remain separate, explicitly authorized executor work. ScopeRook should expose that distinction in its agent brief instead of letting the model infer it.
+Daybreak Blue is a strong fit for secure code review, vulnerability discovery and triage, threat modeling, synthetic validation, evidence reduction, remediation, and patch verification. Advanced live testing and exploit-chain validation remain separate, explicitly authorized executor work. BountyBreak should expose that distinction in its agent brief instead of letting the model infer it.
 
 The MCP should optimize for Daybreak by returning compact structured objects rather than long prose, presenting one next action, keeping current scope and evidence state durable, marking source text as untrusted data, and putting authorization and request limits in code outside the model.
 

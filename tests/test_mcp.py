@@ -6,20 +6,20 @@ import tempfile
 import unittest
 
 import integration_catalog
-from scoperook_daybreak_server import ScopeRookTools, TOOLS, handle
+from bountybreak_daybreak_server import BountyBreakTools, TOOLS, handle
 from workbench import INTAKE_FIELDS
 
 
-class ScopeRookMcpTests(unittest.TestCase):
+class BountyBreakMcpTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.tools = ScopeRookTools(Path(self.temp.name))
+        self.tools = BountyBreakTools(Path(self.temp.name))
 
     def tearDown(self):
         self.temp.cleanup()
 
     def create_candidate(self):
-        created = self.tools.call("scoperook_create_engagement", {
+        created = self.tools.call("bountybreak_create_engagement", {
             "name": "Private program", "kind": "bounty",
             "authority": "https://bugcrowd.example/program", "asset": "https://app.example.invalid",
         })
@@ -29,8 +29,8 @@ class ScopeRookMcpTests(unittest.TestCase):
             "prior_art_sources", "open_questions",
         )}
         intake.update({"engagement_id": created["id"], "program_url": "https://bugcrowd.example/program"})
-        gate = self.tools.call("scoperook_set_intake", intake)
-        plan = self.tools.call("scoperook_add_plan", {
+        gate = self.tools.call("bountybreak_set_intake", intake)
+        plan = self.tools.call("bountybreak_add_plan", {
             "engagement_id": created["id"], "title": "Role boundary permits restricted read",
             "hypothesis": "A researcher-controlled member can read the controlled admin fixture",
             "impact": "Unauthorized access to researcher-controlled administrative data",
@@ -47,58 +47,67 @@ class ScopeRookMcpTests(unittest.TestCase):
     def test_initialize_and_tool_catalog(self):
         initialized = handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                               "params": {"protocolVersion": "2025-06-18"}}, self.tools)
-        self.assertEqual(initialized["serverInfo"]["name"], "scoperook-daybreak")
+        self.assertEqual(initialized["serverInfo"]["name"], "bountybreak-daybreak")
         self.assertIn("resources", initialized["capabilities"])
         self.assertIn("prompts", initialized["capabilities"])
         listed = handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"}, self.tools)
         names = {item["name"] for item in listed["tools"]}
         self.assertEqual(len(names), len(TOOLS))
-        self.assertIn("scoperook_search_prior_art", names)
-        self.assertIn("scoperook_search_current_kev", names)
-        self.assertIn("scoperook_verify_cve", names)
-        self.assertIn("scoperook_research_cve", names)
-        self.assertIn("scoperook_search_exploitdb", names)
-        self.assertIn("scoperook_query_osv_package", names)
-        self.assertIn("scoperook_agent_brief", names)
-        self.assertIn("scoperook_set_validation_contract", names)
-        self.assertIn("scoperook_set_target_profile", names)
-        self.assertIn("scoperook_set_asset_context", names)
-        self.assertIn("scoperook_record_hunt_session", names)
-        self.assertIn("scoperook_hunt_portfolio", names)
-        self.assertIn("scoperook_get_target_history", names)
-        self.assertIn("scoperook_work_queue", names)
-        self.assertIn("scoperook_rank_candidates", names)
-        self.assertIn("scoperook_review_candidate", names)
-        self.assertIn("scoperook_build_evidence_manifest", names)
-        self.assertIn("scoperook_list_synthetic_labs", names)
-        self.assertIn("scoperook_run_synthetic_lab", names)
-        self.assertIn("scoperook_register_tool_capability", names)
-        self.assertIn("scoperook_route_existing_tools", names)
-        self.assertIn("scoperook_search_integration_catalog", names)
-        self.assertIn("scoperook_import_nuclei_template", names)
-        self.assertIn("scoperook_get_nuclei_template_intelligence", names)
-        self.assertIn("scoperook_import_surface_artifact", names)
-        self.assertIn("scoperook_get_surface_inventory", names)
-        self.assertIn("scoperook_compare_intake", names)
-        self.assertNotIn("scoperook_local_run", names)
+        self.assertIn("bountybreak_search_prior_art", names)
+        self.assertIn("bountybreak_search_current_kev", names)
+        self.assertIn("bountybreak_verify_cve", names)
+        self.assertIn("bountybreak_research_cve", names)
+        self.assertIn("bountybreak_search_exploitdb", names)
+        self.assertIn("bountybreak_query_osv_package", names)
+        self.assertIn("bountybreak_agent_brief", names)
+        self.assertIn("bountybreak_set_validation_contract", names)
+        self.assertIn("bountybreak_set_target_profile", names)
+        self.assertIn("bountybreak_set_asset_context", names)
+        self.assertIn("bountybreak_record_hunt_session", names)
+        self.assertIn("bountybreak_hunt_portfolio", names)
+        self.assertIn("bountybreak_get_target_history", names)
+        self.assertIn("bountybreak_work_queue", names)
+        self.assertIn("bountybreak_rank_candidates", names)
+        self.assertIn("bountybreak_review_candidate", names)
+        self.assertIn("bountybreak_build_evidence_manifest", names)
+        self.assertIn("bountybreak_list_synthetic_labs", names)
+        self.assertIn("bountybreak_run_synthetic_lab", names)
+        self.assertIn("bountybreak_register_tool_capability", names)
+        self.assertIn("bountybreak_route_existing_tools", names)
+        self.assertIn("bountybreak_search_integration_catalog", names)
+        self.assertIn("bountybreak_import_nuclei_template", names)
+        self.assertIn("bountybreak_get_nuclei_template_intelligence", names)
+        self.assertIn("bountybreak_import_surface_artifact", names)
+        self.assertIn("bountybreak_get_surface_inventory", names)
+        self.assertIn("bountybreak_compare_intake", names)
+        self.assertNotIn("bountybreak_local_run", names)
 
     def test_resources_prompts_and_existing_tool_router(self):
         resources = handle({"jsonrpc": "2.0", "id": 1, "method": "resources/list"}, self.tools)
         self.assertEqual(len(resources["resources"]), 3)
         resource = handle({"jsonrpc": "2.0", "id": 2, "method": "resources/read",
-                           "params": {"uri": "scoperook://methodology/daybreak-blue"}}, self.tools)
+                           "params": {"uri": "bountybreak://methodology/daybreak-blue"}}, self.tools)
         self.assertIn("separate executor preflight", resource["contents"][0]["text"])
         prompts = handle({"jsonrpc": "2.0", "id": 3, "method": "prompts/list"}, self.tools)
         self.assertEqual({item["name"] for item in prompts["prompts"]},
-                         {"scoperook-next-action", "scoperook-candidate-review",
-                          "scoperook-continuous-hunt"})
+                         {"bountybreak-next-action", "bountybreak-candidate-review",
+                          "bountybreak-continuous-hunt"})
         prompt = handle({"jsonrpc": "2.0", "id": 4, "method": "prompts/get",
-                         "params": {"name": "scoperook-next-action", "arguments": {}}}, self.tools)
-        self.assertIn("scoperook_agent_brief", prompt["messages"][0]["content"]["text"])
+                         "params": {"name": "bountybreak-next-action", "arguments": {}}}, self.tools)
+        self.assertIn("bountybreak_agent_brief", prompt["messages"][0]["content"]["text"])
+
+        legacy_status = self.tools.call("scoperook_status", {})
+        self.assertEqual(legacy_status["server_version"], "0.8.2")
+        legacy_resource = handle({"jsonrpc": "2.0", "id": 5, "method": "resources/read",
+                                  "params": {"uri": "scoperook://methodology/daybreak-blue"}}, self.tools)
+        self.assertIn("separate executor preflight", legacy_resource["contents"][0]["text"])
+        legacy_prompt = handle({"jsonrpc": "2.0", "id": 6, "method": "prompts/get",
+                                "params": {"name": "scoperook-next-action", "arguments": {}}}, self.tools)
+        self.assertIn("bountybreak_agent_brief", legacy_prompt["messages"][0]["content"]["text"])
 
         executable = Path(self.temp.name) / "review-tool.exe"
         executable.write_bytes(b"reviewed fixture")
-        registered = self.tools.call("scoperook_register_tool_capability", {
+        registered = self.tools.call("bountybreak_register_tool_capability", {
             "tool_id": "review-tool", "display_name": "Review Tool", "version": "1.0",
             "interface": "local_cli", "phases": ["source_review", "candidate_validation"],
             "capabilities": ["static analysis", "route inventory"],
@@ -107,7 +116,7 @@ class ScopeRookMcpTests(unittest.TestCase):
             "constraints": "Use only local researcher-controlled source artifacts", "notes": "Fixture",
         })
         self.assertTrue(registered["tool"]["available"])
-        routed = self.tools.call("scoperook_route_existing_tools", {
+        routed = self.tools.call("bountybreak_route_existing_tools", {
             "phase": "source_review", "required_capabilities": ["static analysis"],
             "operation_class": "offline",
         })
@@ -115,7 +124,7 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertTrue(routed["execution_ready"])
         self.assertIn("not a tool invocation", routed["boundary"])
 
-        target_tool = self.tools.call("scoperook_register_tool_capability", {
+        target_tool = self.tools.call("bountybreak_register_tool_capability", {
             "tool_id": "proxy-tool", "display_name": "Proxy Tool", "interface": "human_ui",
             "phases": ["traffic_capture"], "capabilities": ["http capture"],
             "operation_classes": ["passive_capture"], "output_formats": ["har"],
@@ -123,7 +132,7 @@ class ScopeRookMcpTests(unittest.TestCase):
             "constraints": "Current exact scope and numeric request limits are mandatory",
         })
         self.assertTrue(target_tool["tool"]["available"])
-        target_route = self.tools.call("scoperook_route_existing_tools", {
+        target_route = self.tools.call("bountybreak_route_existing_tools", {
             "phase": "traffic_capture", "required_capabilities": ["http capture"],
             "operation_class": "passive_capture",
         })
@@ -132,7 +141,7 @@ class ScopeRookMcpTests(unittest.TestCase):
 
         directory = Path(self.temp.name) / "package-directory"
         directory.mkdir()
-        unavailable = self.tools.call("scoperook_register_tool_capability", {
+        unavailable = self.tools.call("bountybreak_register_tool_capability", {
             "tool_id": "directory-cli", "display_name": "Directory CLI", "version": "1.0",
             "interface": "local_cli", "phases": ["source_review"],
             "capabilities": ["directory-only analysis"], "operation_classes": ["offline"],
@@ -141,7 +150,7 @@ class ScopeRookMcpTests(unittest.TestCase):
         })
         self.assertFalse(unavailable["tool"]["available"])
         self.assertIn("exact file", unavailable["tool"]["verification"])
-        unavailable_route = self.tools.call("scoperook_route_existing_tools", {
+        unavailable_route = self.tools.call("bountybreak_route_existing_tools", {
             "phase": "source_review", "required_capabilities": ["directory-only analysis"],
             "operation_class": "offline",
         })
@@ -150,7 +159,7 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertIn("No registered available tool", unavailable_route["blockers"][0])
 
     def test_projectdiscovery_integration_catalog_is_guidance_only(self):
-        result = self.tools.call("scoperook_search_integration_catalog", {
+        result = self.tools.call("bountybreak_search_integration_catalog", {
             "query": "template", "phase": "candidate_validation", "limit": 10,
         })
         ids = {item["id"] for item in result["integrations"]}
@@ -175,7 +184,7 @@ class ScopeRookMcpTests(unittest.TestCase):
     def test_runtime_validation_contract_binds_identity_state_sequence_and_budget(self):
         created, _gate, plan_result = self.create_candidate()
         plan = plan_result["plan"]
-        result = self.tools.call("scoperook_set_validation_contract", {
+        result = self.tools.call("bountybreak_set_validation_contract", {
             "engagement_id": created["id"], "plan_id": plan["id"],
             "environment": "researcher_owned_runtime",
             "candidate_actor": "Researcher-controlled member",
@@ -192,17 +201,17 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertEqual(result["asset"], "https://app.example.invalid")
         self.assertEqual(result["max_requests"], 3)
         self.assertFalse(result["execution_ready"])
-        record = self.tools.call("scoperook_get_engagement", {
+        record = self.tools.call("bountybreak_get_engagement", {
             "engagement_id": created["id"],
         })["engagement"]
         self.assertEqual(record["plans"][0]["validation_contract"]["sequence_steps"],
                          ["Authenticate as the member", "Request the exact controlled marker object"])
-        manifest = self.tools.call("scoperook_build_evidence_manifest", {
+        manifest = self.tools.call("bountybreak_build_evidence_manifest", {
             "engagement_id": created["id"], "plan_id": plan["id"], "save": False,
         })["manifest"]
         self.assertEqual(manifest["plan"]["validation_contract"]["max_requests"], 3)
         with self.assertRaisesRegex(ValueError, "zero request budget"):
-            self.tools.call("scoperook_set_validation_contract", {
+            self.tools.call("bountybreak_set_validation_contract", {
                 "engagement_id": created["id"], "plan_id": plan["id"],
                 "environment": "offline_source", "candidate_actor": "Static reviewer",
                 "control_actor": "Second reviewer", "starting_state": "Pinned local source",
@@ -215,7 +224,7 @@ class ScopeRookMcpTests(unittest.TestCase):
     def test_continuous_target_profile_history_and_nuclei_intake(self):
         created, _gate, plan_result = self.create_candidate()
         plan = plan_result["plan"]
-        self.tools.call("scoperook_set_target_profile", {
+        self.tools.call("bountybreak_set_target_profile", {
             "engagement_id": created["id"], "platform": "bugcrowd",
             "program_status": "active", "priority": "high",
             "attacker_payoffs": ["Unauthorized access to controlled account data"],
@@ -225,14 +234,14 @@ class ScopeRookMcpTests(unittest.TestCase):
             "next_action": "Review the identity boundary", "revisit_after": "",
             "tags": ["authenticated", "web"],
         })
-        self.tools.call("scoperook_set_asset_context", {
+        self.tools.call("bountybreak_set_asset_context", {
             "engagement_id": created["id"], "asset": "https://app.example.invalid",
             "asset_type": "web", "scope_status": "in_scope",
             "reward_status": "rewarded", "test_status": "active",
             "constraints": "Manual low-volume tests with researcher-controlled data only",
             "notes": "No secret values stored",
         })
-        session = self.tools.call("scoperook_record_hunt_session", {
+        session = self.tools.call("bountybreak_record_hunt_session", {
             "engagement_id": created["id"], "lane": "identity_access", "status": "lead",
             "environment": "offline_source", "summary": "One bounded source lead remains",
             "candidate_ids": [plan["id"]], "source_refs": ["evidence/source-note.md"],
@@ -264,20 +273,20 @@ http:
     path:
       - \"{{BaseURL}}/private-marker\"
 """, encoding="utf-8")
-        imported = self.tools.call("scoperook_import_nuclei_template", {
+        imported = self.tools.call("bountybreak_import_nuclei_template", {
             "engagement_id": created["id"], "source_reference": "evidence/fixture.yaml",
             "asset": "https://app.example.invalid", "upstream_commit": "d" * 40,
             "upstream_path": "http/cves/2026/CVE-2026-12345.yaml",
         })
         self.assertFalse(imported["execution"]["allowed"])
-        restored = self.tools.call("scoperook_get_nuclei_template_intelligence", {
+        restored = self.tools.call("bountybreak_get_nuclei_template_intelligence", {
             "engagement_id": created["id"], "import_id": imported["import_id"],
         })
         self.assertEqual(restored["template"]["id"], "CVE-2026-12345")
-        portfolio = self.tools.call("scoperook_hunt_portfolio", {})
+        portfolio = self.tools.call("bountybreak_hunt_portfolio", {})
         self.assertEqual(portfolio["next_target"]["engagement_id"], created["id"])
         self.assertTrue(portfolio["targets"][0]["documentation_complete"])
-        history = self.tools.call("scoperook_get_target_history", {
+        history = self.tools.call("bountybreak_get_target_history", {
             "engagement_id": created["id"], "limit": 100,
         })
         types = {event["type"] for event in history["events"]}
@@ -285,17 +294,17 @@ http:
         self.assertIn("template_intelligence", types)
 
     def test_synthetic_lab_catalog_is_bundled_and_fail_closed(self):
-        result = self.tools.call("scoperook_list_synthetic_labs", {})
+        result = self.tools.call("bountybreak_list_synthetic_labs", {})
         self.assertEqual(result["labs"][0]["id"], "python-access-control")
         self.assertTrue(result["labs"][0]["valid"])
         self.assertFalse(result["backend"]["configured"])
         with self.assertRaisesRegex(ValueError, "explicitly configured"):
-            self.tools.call("scoperook_run_synthetic_lab", {"lab_id": "python-access-control"})
+            self.tools.call("bountybreak_run_synthetic_lab", {"lab_id": "python-access-control"})
 
     def test_planning_records_are_metadata_only(self):
         created, gate, _plan = self.create_candidate()
         self.assertTrue(gate["scope_gate"]["complete"])
-        listed = self.tools.call("scoperook_list_engagements", {})
+        listed = self.tools.call("bountybreak_list_engagements", {})
         encoded = json.dumps(listed)
         self.assertIn(created["id"], encoded)
         self.assertNotIn("bugcrowd.example", encoded)
@@ -306,11 +315,11 @@ http:
     def test_scope_gate_report_and_financial_states(self):
         created, _gate, plan_result = self.create_candidate()
         plan = plan_result["plan"]
-        incomplete = self.tools.call("scoperook_build_report", {
+        incomplete = self.tools.call("bountybreak_build_report", {
             "engagement_id": created["id"], "plan_id": plan["id"]})
         self.assertFalse(incomplete["ready"])
         self.assertIn("observed_evidence", incomplete["missing"])
-        self.tools.call("scoperook_record_observation", {
+        self.tools.call("bountybreak_record_observation", {
             "engagement_id": created["id"], "plan_id": plan["id"], "classification": "observed",
             "summary": "The controlled member received the controlled fixture with HTTP 200",
             "reproduction": "Sign in as the controlled member; request the exact fixture; record HTTP 200",
@@ -318,16 +327,16 @@ http:
             "independent_impact_check": "The returned fixture contained the unique researcher marker",
             "evidence_refs": ["evidence/request-response-hashes.json"],
         })
-        report = self.tools.call("scoperook_build_report", {
+        report = self.tools.call("bountybreak_build_report", {
             "engagement_id": created["id"], "plan_id": plan["id"], "save": True})
         self.assertTrue(report["ready"])
         self.assertIn("## Negative control", report["markdown"])
         self.assertTrue(Path(report["saved_to"]).is_file())
-        self.tools.call("scoperook_record_outcome", {
+        self.tools.call("bountybreak_record_outcome", {
             "engagement_id": created["id"], "plan_id": plan["id"], "status": "accepted",
             "submission_reference": "BC-12345", "pending_award_usd": 500, "human_minutes": 45,
         })
-        status = self.tools.call("scoperook_status", {})
+        status = self.tools.call("bountybreak_status", {})
         self.assertEqual(status["financials"]["recorded_pending_awards_usd"], 500.0)
         self.assertIsNone(status["financials"]["received_cash_usd"])
         self.assertEqual(status["financials"]["human_minutes"], 45)
@@ -335,7 +344,7 @@ http:
     def test_agent_workflow_assessment_and_evidence_manifest(self):
         created, _gate, plan_result = self.create_candidate()
         plan = plan_result["plan"]
-        self.tools.call("scoperook_set_candidate_assessment", {
+        self.tools.call("bountybreak_set_candidate_assessment", {
             "engagement_id": created["id"], "plan_id": plan["id"],
             "attacker_motive": "A member would seek access to controlled administrator records",
             "plausible_payoff": "Unauthorized access to researcher-controlled administrative data",
@@ -347,7 +356,7 @@ http:
         evidence_dir = Path(self.temp.name) / created["id"] / "evidence"
         evidence_dir.mkdir(parents=True)
         (evidence_dir / "proof.json").write_text('{"status":200}\n', encoding="utf-8")
-        self.tools.call("scoperook_record_observation", {
+        self.tools.call("bountybreak_record_observation", {
             "engagement_id": created["id"], "plan_id": plan["id"], "classification": "observed",
             "summary": "The member received the controlled administrator fixture",
             "reproduction": "Request the exact controlled fixture as the controlled member",
@@ -355,26 +364,26 @@ http:
             "independent_impact_check": "The unique controlled marker was present",
             "evidence_refs": ["evidence/proof.json"],
         })
-        review = self.tools.call("scoperook_review_candidate", {
+        review = self.tools.call("bountybreak_review_candidate", {
             "engagement_id": created["id"], "plan_id": plan["id"],
         })
         self.assertTrue(review["report_ready"])
         self.assertEqual(review["evidence"][0]["state"], "verified")
-        manifest = self.tools.call("scoperook_build_evidence_manifest", {
+        manifest = self.tools.call("bountybreak_build_evidence_manifest", {
             "engagement_id": created["id"], "plan_id": plan["id"], "save": True,
         })
         self.assertTrue(Path(manifest["saved_to"]).is_file())
         self.assertEqual(len(manifest["manifest"]["manifest_sha256"]), 64)
-        ranked = self.tools.call("scoperook_rank_candidates", {"engagement_id": created["id"]})
+        ranked = self.tools.call("bountybreak_rank_candidates", {"engagement_id": created["id"]})
         self.assertGreater(ranked["candidates"][0]["score"], 50)
-        brief = self.tools.call("scoperook_agent_brief", {
+        brief = self.tools.call("bountybreak_agent_brief", {
             "engagement_id": created["id"], "plan_id": plan["id"],
         })
         self.assertIn("Daybreak Blue", brief["profile"])
         self.assertTrue(brief["selected_candidate_review"]["report_ready"])
 
     def test_unknown_material_intake_keeps_scope_gate_closed(self):
-        created = self.tools.call("scoperook_create_engagement", {
+        created = self.tools.call("bountybreak_create_engagement", {
             "name": "Unresolved program", "kind": "bounty",
             "authority": "https://bugcrowd.example/program", "asset": "https://app.example.invalid",
         })
@@ -385,49 +394,49 @@ http:
         )}
         intake.update({"engagement_id": created["id"],
                        "program_url": "https://bugcrowd.example/program", "rate_limits": "Unknown"})
-        gate = self.tools.call("scoperook_set_intake", intake)["scope_gate"]
+        gate = self.tools.call("bountybreak_set_intake", intake)["scope_gate"]
         self.assertFalse(gate["complete"])
         self.assertEqual(gate["unresolved"], ["rate_limits"])
 
     def test_intake_snapshots_report_changed_fields_without_widening_scope(self):
         created, _gate, _plan = self.create_candidate()
-        baseline = self.tools.call("scoperook_compare_intake", {"engagement_id": created["id"]})
+        baseline = self.tools.call("bountybreak_compare_intake", {"engagement_id": created["id"]})
         self.assertEqual(baseline["snapshot_count"], 1)
         self.assertFalse(baseline["changed"])
-        current = self.tools.call("scoperook_get_engagement", {
+        current = self.tools.call("bountybreak_get_engagement", {
             "engagement_id": created["id"]})["engagement"]["intake"]
         update = {field: current[field] for field in INTAKE_FIELDS}
         update.update({"engagement_id": created["id"], "rate_limits": "Ten requests per minute"})
-        self.tools.call("scoperook_set_intake", update)
-        changed = self.tools.call("scoperook_compare_intake", {"engagement_id": created["id"]})
+        self.tools.call("bountybreak_set_intake", update)
+        changed = self.tools.call("bountybreak_compare_intake", {"engagement_id": created["id"]})
         self.assertEqual(changed["snapshot_count"], 2)
         self.assertEqual(changed["changed_fields"], ["rate_limits"])
         self.assertNotEqual(changed["previous_sha256"], changed["current_sha256"])
 
     def test_prior_art_and_simulation_remain_offline(self):
-        records = self.tools.call("scoperook_search_prior_art", {"query": "NetScaler", "limit": 2})
+        records = self.tools.call("bountybreak_search_prior_art", {"query": "NetScaler", "limit": 2})
         self.assertEqual({"CVE-2026-88771", "CVE-2026-88772"},
                          {record["cve_id"] for record in records["records"]})
         example = Path(__file__).parents[1] / "intelligence" / "examples"
         world = json.loads((example / "synthetic_role_chain_world.json").read_text(encoding="utf-8"))
         plan = json.loads((example / "synthetic_role_chain_plan.json").read_text(encoding="utf-8"))
-        result = self.tools.call("scoperook_simulate_hypothesis", {
+        result = self.tools.call("bountybreak_simulate_hypothesis", {
             "world": world, "plan": plan, "explore": True,
         })
         self.assertEqual(result["result"], "supported_in_model")
         self.assertEqual(result["exploration"]["result"], "hypothesis_path_found")
 
     def test_stdio_transport_ignores_tool_call_notifications(self):
-        server = Path(__file__).parents[1] / "scoperook_daybreak_server.py"
+        server = Path(__file__).parents[1] / "bountybreak_daybreak_server.py"
         data_dir = Path(self.temp.name) / "stdio"
         messages = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize",
              "params": {"protocolVersion": "2025-06-18"}},
             {"jsonrpc": "2.0", "method": "tools/call", "params": {
-                "name": "scoperook_create_engagement", "arguments": {
+                "name": "bountybreak_create_engagement", "arguments": {
                     "name": "Must not be created", "kind": "owned_lab", "authority": "notification"}}},
             {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-             "params": {"name": "scoperook_status", "arguments": {}}},
+             "params": {"name": "bountybreak_status", "arguments": {}}},
         ]
         process = subprocess.run(
             [sys.executable, str(server), "--data-dir", str(data_dir)],

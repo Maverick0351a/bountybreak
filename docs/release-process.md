@@ -9,15 +9,15 @@ This process keeps the downloadable package tied to a reviewed Git commit and ve
 5. Commit the reviewed source and create the archive from that exact commit:
 
    ```powershell
-   git archive --format=zip --prefix=scoperook-v0.8.1/ --output=dist/scoperook-v0.8.1.zip HEAD
-   Get-FileHash -Algorithm SHA256 dist/scoperook-v0.8.1.zip
+   git archive --format=zip --prefix=bountybreak-v0.8.2/ --output=dist/bountybreak-v0.8.2.zip HEAD
+   Get-FileHash -Algorithm SHA256 dist/bountybreak-v0.8.2.zip
    ```
 
 6. Extract the archive into a fresh temporary directory and run:
 
    ```powershell
    python -m unittest discover -s tests -v
-   python -m py_compile agent_workflow.py ai_local.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py scoperook_daybreak_server.py scoperook_mcp.py surface_import.py tool_router.py workbench.py
+   python -m py_compile agent_workflow.py ai_local.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py bountybreak_daybreak_server.py bountybreak_mcp.py surface_import.py tool_router.py workbench.py
    ```
 
 7. Review the archive file list and the social preview. Record the byte count and SHA-256 in the release draft.

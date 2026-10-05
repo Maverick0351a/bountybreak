@@ -37,7 +37,7 @@
       "phases": ["research", "policy", "candidate_validation"],
       "capabilities": ["cve mapping", "technique metadata", "request-count metadata", "matcher review"],
       "operation_classes": ["offline"],
-      "traffic_profile": "No target traffic when ScopeRook reads reviewed template metadata only.",
+      "traffic_profile": "No target traffic when BountyBreak reads reviewed template metadata only.",
       "safe_defaults": ["metadata only", "no payload execution", "verify primary advisory", "pin template sha256"],
       "required_gates": ["primary-source verification", "affected-version verification", "duplicate review"],
       "outputs": ["template metadata", "source links"],

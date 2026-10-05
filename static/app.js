@@ -87,7 +87,7 @@ function renderAiEngagements() {
   const enabled = Number.isInteger(state.ai_port);
   $("#model-status").textContent = enabled
     ? `Local AI enabled at 127.0.0.1:${state.ai_port}. The question and selected context go to that model.`
-    : "AI drafting is off. Restart ScopeRook with --model-port PORT after choosing a local model.";
+    : "AI drafting is off. Restart BountyBreak with --model-port PORT after choosing a local model.";
   $("#ai-form button.primary").disabled = !enabled;
 }
 

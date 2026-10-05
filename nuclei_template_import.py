@@ -404,7 +404,7 @@ def _parse_template(raw: bytes) -> dict:
         "request_bound": {
             "declared_max_requests": max_requests,
             "state": "metadata_only_unenforced" if max_requests is not None else "unknown",
-            "enforced_by_scoperook": False,
+            "enforced_by_bountybreak": False,
         },
         "execution_risk": {
             "review_class": review_class,
@@ -480,7 +480,7 @@ def import_template(engagement: dict, engagement_dir: Path, *, source_reference:
         "execution": {
             "allowed": False,
             "reason": (
-                "Metadata intake only. ScopeRook did not validate YAML semantics, template signatures, "
+                "Metadata intake only. BountyBreak did not validate YAML semantics, template signatures, "
                 "source provenance, target applicability, program authorization, or an engine-enforced "
                 "request bound."
             ),

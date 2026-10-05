@@ -18,7 +18,7 @@ case "$token" in *[!a-f0-9]*|'') echo "invalid token" >&2; exit 2;; esac
 case "$entrypoint" in /*|*..*|*\\*) echo "invalid entrypoint" >&2; exit 2;; esac
 case "$seconds:$cpu_seconds:$memory_bytes" in *[!0-9:]*|'') echo "invalid limits" >&2; exit 2;; esac
 
-root="/tmp/scoperook-sandbox-$token"
+root="/tmp/bountybreak-sandbox-$token"
 cleanup() {
     umount -l "$root/proc" 2>/dev/null || true
     umount -l "$root/dev/urandom" 2>/dev/null || true
@@ -70,9 +70,9 @@ chroot "$root" /usr/bin/setpriv \
 exit_code=$?
 set -e
 
-printf 'SCOPEROOK_EXIT=%s\n' "$exit_code"
-printf 'SCOPEROOK_STDOUT_B64='
+printf 'BOUNTYBREAK_EXIT=%s\n' "$exit_code"
+printf 'BOUNTYBREAK_STDOUT_B64='
 /usr/bin/base64 -w0 "$root/tmp/stdout.txt" 2>/dev/null || true
-printf '\nSCOPEROOK_STDERR_B64='
+printf '\nBOUNTYBREAK_STDERR_B64='
 /usr/bin/base64 -w0 "$root/tmp/stderr.txt" 2>/dev/null || true
 printf '\n'
