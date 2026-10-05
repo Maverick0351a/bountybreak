@@ -29,6 +29,12 @@ ScopeRook must be sold as an operating layer that helps researchers choose, docu
 7. Publish a threat model for local records, MCP clients, untrusted source files, browser imports, model context, tool registry, and optional executors.
 8. If active adapters are added, require independently counted, short-lived executor receipts and adversarial tests proving stale, broader, redirected, or over-budget requests fail closed.
 
+## Readiness checkpoint — 2026-10-05
+
+The repository now has a concise product front page, real dashboard and social-preview assets, a security policy, contribution and conduct guidance, structured issue forms, a pull-request checklist, release notes, and pinned cross-platform CI for Python 3.11 and 3.12. The 100-target and 5,000-session portfolio gate passes, along with 45 unit tests.
+
+The next publication gate is the repository license. After that choice, build and test the exact v0.8.0 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
+
 ## Beta success gates
 
 - Ten outside researchers complete setup and one full target session without developer intervention.

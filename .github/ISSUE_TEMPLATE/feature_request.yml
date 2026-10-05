@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose an improvement to ScopeRook's authorized research workflow.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Research workflow problem
+      description: Describe the operator problem and when it occurs.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the result without prescribing implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Authorization and data boundaries
+      description: Explain any target traffic, secret handling, or external-service implications.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Success measure
+      description: State how we would know this materially improves the workflow.
+    validations:
+      required: true
