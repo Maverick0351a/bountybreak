@@ -90,6 +90,24 @@ class WorkbenchTests(unittest.TestCase):
             "value": "https://user:secret@app.example.invalid/?token=abc"})
         self.assertEqual(status, 400)
 
+    def test_corrupt_engagement_is_preserved_and_reported(self):
+        ident = "corrupt-fixture"
+        directory = Path(self.temp.name) / ident
+        path = directory / "engagement.json"
+        directory.mkdir(exist_ok=True)
+        path.write_text("{not valid json", encoding="utf-8")
+        try:
+            status, state = self.request("/api/state")
+            self.assertEqual(status, 200)
+            self.assertIn({
+                "engagement_id": ident,
+                "message": "Record was preserved on disk but could not be loaded",
+            }, state["data_warnings"])
+            self.assertTrue(path.exists())
+        finally:
+            path.unlink(missing_ok=True)
+            directory.rmdir()
+
     def test_recorded_owned_loopback_asset_can_run_bounded_check(self):
         origin = f"http://127.0.0.1:{self.demo.server_port}"
         status, engagement = self.request("/api/engagements", "POST", {

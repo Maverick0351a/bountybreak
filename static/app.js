@@ -12,10 +12,10 @@ function el(tag, className, content) {
   return node;
 }
 
-function flash(message) {
+function flash(message, persistent = false) {
   $("#message").textContent = message;
   window.clearTimeout(flash.timer);
-  flash.timer = window.setTimeout(() => { $("#message").textContent = ""; }, 8000);
+  if (!persistent) flash.timer = window.setTimeout(() => { $("#message").textContent = ""; }, 8000);
 }
 
 async function api(path, method = "GET", data) {
@@ -26,8 +26,12 @@ async function api(path, method = "GET", data) {
     options.body = JSON.stringify(data);
   }
   const response = await fetch(path, options);
-  const body = await response.json();
+  const raw = await response.text();
+  let body = {};
+  try { body = raw ? JSON.parse(raw) : {}; }
+  catch (_error) { /* Preserve the HTTP status below instead of surfacing a JSON parser error. */ }
   if (!response.ok) throw new Error(body.error || `Request failed: ${response.status}`);
+  if (!raw || typeof body !== "object" || body === null) throw new Error("Server returned an invalid response");
   return body;
 }
 
@@ -110,6 +114,10 @@ async function refresh() {
   renderCases();
   renderTools();
   renderAiEngagements();
+  if ((state.data_warnings || []).length) {
+    const ids = state.data_warnings.map((item) => item.engagement_id).join(", ");
+    flash(`Data warning: ${state.data_warnings.length} engagement record could not be loaded (${ids}). The file was preserved on disk.`, true);
+  }
 }
 
 $("#intel-form").addEventListener("submit", async (event) => {

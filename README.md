@@ -18,6 +18,18 @@ python workbench.py --data-dir /private/path --port 8767
 
 No installation, cloud account, Docker runtime, or scanner download is required. To enable **AI assistant**, start a model you chose on a separate **OpenAI-compatible local model server** with `/v1/models` and `/v1/chat/completions`, then explicitly launch ScopeRook with `--model-port PORT`. It connects only to `127.0.0.1:PORT` when you request a draft. Without that flag, the draft endpoint rejects requests and no model is contacted. There is no cloud fallback, API key collection, automatic model download, or background prompt transfer. This is an API-compatible local model integration; it is not a ChatGPT plugin or OpenAI service integration.
 
+## Codex and Claude tool
+
+`scoperook_mcp.py` is a dependency-free stdio MCP server that both Codex and Claude can launch. It exposes local planning records, metadata-only engagement listings, the public prior-art index, and offline symbolic simulation. It intentionally omits target requests, scanners, credentials, full engagement reads, and report submission.
+
+Register it with an explicit Python executable and repository path. For example:
+
+```sh
+codex mcp add scoperook -- python C:/path/to/scoperook/scoperook_mcp.py --data-dir C:/path/to/scoperook/data
+```
+
+Claude uses the same command and arguments in an `mcpServers.scoperook` stdio entry. Tool outputs can be sent to the connected agent provider. Engagement listing is metadata-only; prior-art records are public; create/add tools store exactly what the agent supplies. Do not put secrets, customer data, private program text, or live session material in tool arguments.
+
 ## Research workflow
 
 1. Create an engagement and record the authority source and optional URL or asset. Bounty and internal entries are planning records.

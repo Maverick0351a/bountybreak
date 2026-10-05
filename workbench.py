@@ -112,16 +112,28 @@ class Store:
             raise ValueError("Invalid engagement ID")
         return self.directory / ident / "engagement.json"
 
-    def list(self) -> list[dict]:
+    def snapshot(self) -> tuple[list[dict], list[dict]]:
+        """Return readable engagements and explicit warnings for preserved bad records."""
         with self.lock:
             result = []
+            warnings = []
             for path in sorted(self.directory.glob("*/engagement.json")):
                 if SLUG.fullmatch(path.parent.name):
                     try:
-                        result.append(json.loads(path.read_text(encoding="utf-8")))
-                    except (OSError, json.JSONDecodeError):
-                        continue
-            return sorted(result, key=lambda item: item.get("created_at", ""), reverse=True)
+                        item = json.loads(path.read_text(encoding="utf-8"))
+                        if not isinstance(item, dict) or item.get("id") != path.parent.name:
+                            raise ValueError("invalid engagement record")
+                        result.append(item)
+                    except (OSError, UnicodeError, ValueError):
+                        warnings.append({
+                            "engagement_id": path.parent.name,
+                            "message": "Record was preserved on disk but could not be loaded",
+                        })
+            return (sorted(result, key=lambda item: item.get("created_at", ""), reverse=True),
+                    warnings)
+
+    def list(self) -> list[dict]:
+        return self.snapshot()[0]
 
     def get(self, ident: str) -> dict:
         with self.lock:
@@ -300,7 +312,8 @@ class AppHandler(BaseHTTPRequestHandler):
         try:
             route = self._route()
             if route == ["api", "state"]:
-                self._json(200, {"engagements": self.server.store.list(), "tools": TOOLS,
+                engagements, data_warnings = self.server.store.snapshot()
+                self._json(200, {"engagements": engagements, "data_warnings": data_warnings, "tools": TOOLS,
                                  "demo_ready": True, "csrf": self.server.csrf,
                                  "ai_port": self.server.model_port})
             elif route == ["api", "sandbox", "example"]:
