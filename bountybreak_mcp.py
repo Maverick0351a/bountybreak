@@ -24,7 +24,7 @@ from workbench import INTAKE_FIELDS, PLAN_DETAIL_FIELDS, Store, clean_text, inta
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = "2025-06-18"
-SERVER_VERSION = "0.8.3"
+SERVER_VERSION = "0.8.4"
 
 
 TOOLS = [

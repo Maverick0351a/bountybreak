@@ -31,7 +31,7 @@ from workbench import (
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = core.PROTOCOL
-SERVER_VERSION = "0.8.3"
+SERVER_VERSION = "0.8.4"
 SERVER_NAME = "bountybreak-daybreak"
 
 

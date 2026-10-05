@@ -44,6 +44,12 @@ The engagement record now carries schema version `1`. Legacy unversioned records
 
 ## Product decision
 
-The local MCP core is functional enough for a small, supervised private beta. This pass does not establish that the product is ready for an unattended paid public launch. A threat model, privacy notice, and SPDX SBOM generator are now present. The remaining gates are release signing, backup and restore for versioned data, and repeated use by outside researchers. Willingness to pay is still unverified.
+The local MCP core is functional enough for a small, supervised private beta. This pass does not establish that the product is ready for an unattended paid public launch. A threat model, privacy notice, and SPDX SBOM generator are now present. Willingness to pay is still unverified.
+
+## Data-lifecycle follow-up
+
+The 0.8.4 lifecycle check correctly identified that the three imported validation records were still readable legacy records without an explicit schema field. A manifest-backed backup and temporary restore completed first. The backup-first migration then updated all three records to schema version 1. The resulting store passed `doctor` with three current records, no legacy, corrupt, or future records, and no blocking issues.
+
+The preserved pre-migration rollback archive has SHA-256 `b7b5b4239c65014fa875a8e4341880915c42548b09fe4c69b2039bd0fa7f28da`. It was restored into a temporary new directory and independently reported all three original records as valid legacy data, confirming that rollback retains the prior state. No target traffic was sent. Signed distribution and repeated use by outside researchers remain the material public-launch gates.
 
 BountyBreak should be offered first as a limited beta whose value claim is continuity, scope discipline, and evidence completeness. It must not promise accepted findings, bounty income, autonomous target testing, or Daybreak Blue access.

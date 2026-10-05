@@ -9,21 +9,21 @@ This process keeps the downloadable package tied to a reviewed Git commit and ve
 5. Commit the reviewed source and create the archive from that exact commit:
 
    ```powershell
-   git archive --format=zip --prefix=bountybreak-v0.8.3/ --output=dist/bountybreak-v0.8.3.zip HEAD
-   Get-FileHash -Algorithm SHA256 dist/bountybreak-v0.8.3.zip
+   git archive --format=zip --prefix=bountybreak-v0.8.4/ --output=dist/bountybreak-v0.8.4.zip HEAD
+   Get-FileHash -Algorithm SHA256 dist/bountybreak-v0.8.4.zip
    ```
 
    Generate the matching SPDX SBOM:
 
    ```powershell
-   python scripts/generate_sbom.py --version 0.8.3 --output dist/bountybreak-v0.8.3.spdx.json
+   python scripts/generate_sbom.py --version 0.8.4 --output dist/bountybreak-v0.8.4.spdx.json
    ```
 
 6. Extract the archive into a fresh temporary directory and run:
 
    ```powershell
    python -m unittest discover -s tests -v
-   python -m py_compile agent_workflow.py ai_local.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py bountybreak_daybreak_server.py bountybreak_mcp.py surface_import.py tool_router.py workbench.py
+   python -m py_compile agent_workflow.py ai_local.py data_lifecycle.py hunt_portfolio.py integration_catalog.py nuclei_template_import.py sandbox_runner.py bountybreak_daybreak_server.py bountybreak_mcp.py surface_import.py tool_router.py workbench.py
    ```
 
 7. Review the archive file list and the social preview. Record the byte count and SHA-256 in the release draft.

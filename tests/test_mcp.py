@@ -97,7 +97,7 @@ class BountyBreakMcpTests(unittest.TestCase):
         self.assertIn("bountybreak_agent_brief", prompt["messages"][0]["content"]["text"])
 
         legacy_status = self.tools.call("scoperook_status", {})
-        self.assertEqual(legacy_status["server_version"], "0.8.3")
+        self.assertEqual(legacy_status["server_version"], "0.8.4")
         legacy_resource = handle({"jsonrpc": "2.0", "id": 5, "method": "resources/read",
                                   "params": {"uri": "scoperook://methodology/daybreak-blue"}}, self.tools)
         self.assertIn("separate executor preflight", legacy_resource["contents"][0]["text"])

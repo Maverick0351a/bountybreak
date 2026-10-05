@@ -4,6 +4,13 @@ All notable BountyBreak changes are recorded here.
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-10-05
+
+- Added a human-controlled local CLI for data-store health checks, manifest-backed backups, exact archive verification, and restore into a new directory.
+- Added backup-first migration for legacy engagement records with an exact pre-migration rollback archive.
+- Rejected corrupt or future-schema records, path traversal, symlinks, duplicate or undeclared archive entries, tampered payloads, encrypted ZIPs, and oversized expansion before restore.
+- Kept backups out of MCP so an agent cannot overwrite a live research store through a tool call.
+
 ## [0.8.3] - 2026-10-05
 
 - Preserved historical policy review timestamps and per-program freshness limits during real-target imports.
@@ -56,7 +63,8 @@ All notable BountyBreak changes are recorded here.
 
 - Initial local dashboard, public exploit-intelligence index, symbolic sandbox, optional local-model adapter, and bounded loopback lab check.
 
-[Unreleased]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.3...HEAD
+[Unreleased]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.4...HEAD
+[0.8.4]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/Maverick0351a/bountybreak/compare/v0.8.0...v0.8.1

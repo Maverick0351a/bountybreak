@@ -12,7 +12,7 @@
   <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-2d8cff">
   <img alt="Designed for approved Daybreak Blue workflows" src="https://img.shields.io/badge/designed%20for-approved%20Daybreak%20Blue-1769aa">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-07111f">
-  <img alt="Version 0.8.3" src="https://img.shields.io/badge/version-0.8.3-2d8cff">
+  <img alt="Version 0.8.4" src="https://img.shields.io/badge/version-0.8.4-2d8cff">
 </p>
 
 <h2 align="center">Quickstart</h2>
@@ -53,6 +53,25 @@ python workbench.py --data-dir C:/private/bountybreak-data --port 8767
 
 AI drafting is off by default. An optional OpenAI-compatible local model can be selected explicitly with `--model-port PORT`; BountyBreak connects only to `127.0.0.1:PORT` for a requested draft. There is no cloud fallback, API-key collection, automatic model download, or background prompt transfer.
 
+## Protect local records
+
+The administrative data-lifecycle CLI is separate from MCP and never overwrites a restore destination. Create and verify a local backup before upgrading or moving a research store:
+
+```sh
+python data_lifecycle.py doctor --data-dir C:/private/bountybreak-data
+python data_lifecycle.py backup --data-dir C:/private/bountybreak-data
+python data_lifecycle.py verify --archive C:/private/bountybreak-data/.backups/bountybreak-backup-TIMESTAMP.zip
+```
+
+Restore into a new path, inspect it, then point BountyBreak at that path:
+
+```sh
+python data_lifecycle.py restore --archive C:/path/to/backup.zip --destination C:/private/bountybreak-restored
+python data_lifecycle.py doctor --data-dir C:/private/bountybreak-restored
+```
+
+`migrate` first writes and verifies a rollback archive, then upgrades supported legacy records atomically. See [Local backup, restore, and migration](docs/data-lifecycle.md) for archive scope, rollback, and recovery behavior.
+
 ## Connect Daybreak Blue
 
 `bountybreak_daybreak_server.py` is the primary dependency-free stdio MCP server for the Daybreak Blue workflow. Register it in Codex with an explicit Python executable, repository path, private data directory, and optional WSL distribution for reviewed synthetic labs:
@@ -63,7 +82,7 @@ codex mcp add bountybreak -- python C:/path/to/bountybreak/bountybreak_daybreak_
 
 Other stdio MCP clients can use the same command and arguments, while `bountybreak_mcp.py` remains a smaller compatibility server. BountyBreak's product experience and prompts are optimized for Daybreak Blue.
 
-Version 0.8.3 lists the `bountybreak_*` tool namespace. Existing `scoperook_*` calls and the former entry-point filenames remain accepted through the 0.8 release line for migration.
+Version 0.8.4 lists the `bountybreak_*` tool namespace. Existing `scoperook_*` calls and the former entry-point filenames remain accepted through the 0.8 release line for migration.
 
 The primary server exposes compact tools, resources, and prompts for:
 
@@ -132,10 +151,10 @@ See [ProjectDiscovery integrations](docs/projectdiscovery-integrations.md) and t
 
 ```sh
 python -m unittest discover -s tests -v
-python -m py_compile workbench.py bountybreak_daybreak_server.py bountybreak_mcp.py
+python -m py_compile workbench.py data_lifecycle.py bountybreak_daybreak_server.py bountybreak_mcp.py
 ```
 
-The suite covers the web API, portfolio/history behavior, a 100-target and 5,000-session scale trial, malformed legacy records, Nuclei metadata reduction, local-model isolation, live-source reduction, surface imports, evidence gates, synthetic controls, request budgets, redirect stops, and Host/Origin/CSRF boundaries.
+The suite covers the web API, portfolio/history behavior, a 100-target and 5,000-session scale trial, backup integrity, safe restore, migration rollback, malformed legacy records, Nuclei metadata reduction, local-model isolation, live-source reduction, surface imports, evidence gates, synthetic controls, request budgets, redirect stops, and Host/Origin/CSRF boundaries.
 
 ## Documentation
 
@@ -143,9 +162,10 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 - [Launch readiness and beta gates](docs/launch-readiness.md)
 - [Real-program workflow validation](docs/field-validation-2026-10-05.md)
 - [Threat model](docs/threat-model.md)
+- [Local backup, restore, and migration](docs/data-lifecycle.md)
 - [Privacy](PRIVACY.md)
 - [Release process](docs/release-process.md)
-- [BountyBreak 0.8.3 release notes](docs/releases/v0.8.3.md)
+- [BountyBreak 0.8.4 release notes](docs/releases/v0.8.4.md)
 - [Competitive analysis](docs/competitive-analysis.md)
 - [Productization and pricing](docs/productization.md)
 - [Oracle sandbox plan](docs/oracle-sandbox-plan.md)
@@ -154,7 +174,7 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 ## Status and license
 
-BountyBreak 0.8.3 is a **Daybreak Blue private-beta candidate**. The real-program workflow pass, continuous portfolio, versioned records, privacy boundary, threat model, and scale tests are implemented. An unattended paid public launch remains blocked on signed distribution, backup and restore, and repeated outside-researcher validation. BountyBreak does not promise accepted reports or income.
+BountyBreak 0.8.4 is a **Daybreak Blue private-beta candidate**. The real-program workflow pass, continuous portfolio, versioned records, verified local backup and restore, privacy boundary, threat model, and scale tests are implemented. An unattended paid public launch remains blocked on signed distribution and repeated outside-researcher validation. BountyBreak does not promise accepted reports or income.
 
 The community core is licensed under the [Apache License 2.0](LICENSE). Future hosted, collaboration, support, and commercial components may be offered separately.
 

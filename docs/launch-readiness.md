@@ -2,7 +2,7 @@
 
 ## Current decision
 
-Continue private development and a small researcher beta. Do not launch an unattended paid public product yet. BountyBreak is positioned as the independent bug bounty operating layer for Daybreak Blue. The continuous target portfolio, history, public intelligence, sanitized imports, and evidence controls form a credible product core, but signed distribution, backup and restore, and outside validation remain material launch blockers.
+Continue private development and a small researcher beta. Do not launch an unattended paid public product yet. BountyBreak is positioned as the independent bug bounty operating layer for Daybreak Blue. The continuous target portfolio, history, public intelligence, sanitized imports, evidence controls, and verified local data lifecycle form a credible product core, but signed distribution and outside validation remain material launch blockers.
 
 BountyBreak must be sold as an operating layer that helps researchers choose, document, resume, and support authorized bounty work. It must not promise accepted findings or income.
 
@@ -23,7 +23,7 @@ BountyBreak must be sold as an operating layer that helps researchers choose, do
 1. Maintain the Apache-2.0 community-core license, NOTICE file, and attribution records for every integrated dependency and data source.
 2. Add signed builds, checksums, SBOMs, a security policy, vulnerability-reporting address, privacy notice, and documented update provenance.
 3. Keep the secretless account-reference model: stable local aliases only, with raw credentials and session material outside BountyBreak.
-4. Maintain the versioned engagement schema and add backup, restore, migration, downgrade, and corrupt-record recovery tests.
+4. Maintain the versioned engagement schema and verified backup, restore, migration, rollback, and corrupt-record recovery tests. **Implemented in 0.8.4.**
 5. Run the Nuclei importer against a researcher-approved, commit-pinned sample spanning HTTP, DNS, network, file, headless, JavaScript, code, workflow, fuzzing, and OOB templates. A missed risky protocol or retained payload/request value blocks release.
 6. Pass a deterministic synthetic portfolio trial with at least 100 targets and 5,000 history events, including pagination and incomplete legacy records.
 7. Publish a threat model for local records, MCP clients, untrusted source files, browser imports, model context, tool registry, and optional executors.
@@ -35,7 +35,7 @@ The repository now has a concise product front page, real dashboard and social-p
 
 A fresh private store was also exercised with three sanitized real-program states: a closed firmware review, a closed no-account web pass, and a paused authenticated setup. The pass sent no new target traffic. It found and corrected stale-policy import, unknown-effort, and paused-target queue defects. The detailed evidence and product decision are in [the real-program workflow validation](field-validation-2026-10-05.md).
 
-The Apache-2.0 community-core license, security policy, privacy notice, threat model, versioned engagement records, checksums, and SPDX SBOM generator are present. Signed distribution, backup and restore for versioned data, and outside-user validation remain open before an unattended paid public launch. Executor receipts remain a gate only if BountyBreak later adds active target-facing adapters; the current MCP has none. BountyBreak intentionally stores non-secret local account aliases and keeps raw credentials outside the product.
+The Apache-2.0 community-core license, security policy, privacy notice, threat model, versioned engagement records, checksums, SPDX SBOM generator, and human-controlled backup, verification, restore, migration, and rollback workflow are present. Signed distribution and outside-user validation remain open before an unattended paid public launch. Executor receipts remain a gate only if BountyBreak later adds active target-facing adapters; the current MCP has none. BountyBreak intentionally stores non-secret local account aliases and keeps raw credentials outside the product.
 
 ## Beta success gates
 

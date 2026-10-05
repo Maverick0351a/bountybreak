@@ -25,6 +25,7 @@ Passwords, tokens, cookies, MFA material, customer data, raw target responses, a
 | Optional local model | Generated hypotheses | Explicit loopback port, off by default, unverified classification, no cloud fallback |
 | Separate security tools | Tool capability claims and outputs | Metadata-only registry and routing; BountyBreak does not launch the tool |
 | Synthetic labs | Reviewed fixture code and results | Pinned manifests, hashes, candidate and negative control, no arbitrary code input |
+| Backup archives | Local engagement records and evidence | Hash manifest, path and symlink rejection, expanded-size limits, exact verification, restore to a new directory only |
 
 ## Primary abuse cases
 
@@ -36,13 +37,15 @@ Passwords, tokens, cookies, MFA material, customer data, raw target responses, a
 6. **Malicious or newer record format.** New records use engagement schema version 1. Unsupported future versions and malformed records are preserved but excluded from work queues.
 7. **Tool metadata mistaken for authorization.** The registry returns a recommendation and an execution boundary. Target-facing work still needs a separate current authorization and executor preflight.
 8. **Source intelligence mistaken for a live finding.** Advisory, CVE, template, or package matches remain research leads. Report gating requires observed evidence, a negative control, an independent impact check, and prior-art review.
+9. **Corrupt or malicious backup.** Every declared file is size- and SHA-256-checked before restore. Duplicate paths, undeclared files, traversal, symlinks, encryption, oversized payloads, and unsupported engagement schemas fail closed. Restore extraction uses a staging directory and never replaces an existing path.
 
 ## Residual risks
 
 - The configured MCP client and model provider can see values the user submits through tools.
 - A user can deliberately place a secret in free-form text despite the documented boundary.
 - The operating system account can read the local data directory unless the user applies filesystem protection.
-- BountyBreak does not yet provide a built-in backup and restore command or signed release artifacts.
+- Local backups are not encrypted. Filesystem permissions and encrypted storage remain the user's responsibility.
+- Release artifacts are not yet signed.
 - A separately installed executor can exceed scope; BountyBreak neither launches nor contains it.
 
 ## Release gates
