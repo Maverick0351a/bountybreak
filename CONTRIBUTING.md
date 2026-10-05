@@ -32,4 +32,4 @@ Use temporary or synthetic data. Never commit the `data/` directory, credentials
 
 Lead with the concrete problem and resulting behavior. Include the validation that matters to a reviewer. Add tests for meaningful behavior changes, update documentation, and keep generated artifacts out of the diff.
 
-By contributing, you confirm that you have the right to submit the work. A repository license has not yet been selected; contribution terms will be formalized before accepting outside code.
+By contributing, you confirm that you have the right to submit the work and agree that the contribution may be distributed under the repository's Apache-2.0 license.

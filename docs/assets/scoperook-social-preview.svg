@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
   <title id="title">ScopeRook social preview</title>
-  <desc id="desc">ScopeRook. Scope first. Proof always. Continuous research operations for security agents.</desc>
+  <desc id="desc">ScopeRook. Scope first. Proof always. Continuous bug bounty operations for Daybreak Blue.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0e0b0d"/>
@@ -40,10 +40,10 @@
   <text x="76" y="304" fill="#f4e8ea" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="-1.2">Proof always.</text>
 
   <path d="M78 350h70" stroke="#f0444f" stroke-width="4"/>
-  <text x="76" y="397" fill="#c8b5bb" font-family="Segoe UI, Arial, sans-serif" font-size="24">Continuous research operations</text>
-  <text x="76" y="430" fill="#c8b5bb" font-family="Segoe UI, Arial, sans-serif" font-size="24">for security agents.</text>
+  <text x="76" y="397" fill="#c8b5bb" font-family="Segoe UI, Arial, sans-serif" font-size="24">Continuous bug bounty operations</text>
+  <text x="76" y="430" fill="#c8b5bb" font-family="Segoe UI, Arial, sans-serif" font-size="24">for Daybreak Blue.</text>
 
-  <text x="76" y="550" fill="#8f7881" font-family="Consolas, monospace" font-size="16" letter-spacing="1.7">LOCAL-FIRST   /   MCP   /   EVIDENCE-GATED</text>
+  <text x="76" y="550" fill="#8f7881" font-family="Consolas, monospace" font-size="16" letter-spacing="1.7">INDEPENDENT   /   LOCAL-FIRST   /   MCP</text>
   <text x="76" y="584" fill="#6f5a63" font-family="Consolas, monospace" font-size="14">PYTHON 3.11+ · STANDARD LIBRARY</text>
 
   <g filter="url(#screenShadow)">

@@ -4,7 +4,7 @@ All notable ScopeRook changes are recorded here.
 
 ## [Unreleased]
 
-- Repository presentation, contribution guidance, security policy, issue templates, and cross-platform CI.
+- Licensed the community core under Apache-2.0 and positioned ScopeRook as an independent Daybreak Blue bug bounty utility.
 
 ## [0.8.0] - 2026-10-05
 

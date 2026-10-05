@@ -2,7 +2,7 @@
 
 ## Current decision
 
-Continue private development and a small researcher beta. Do not launch a paid public product yet. The continuous target portfolio, history, public intelligence, sanitized imports, evidence controls, and Daybreak-oriented MCP form a credible product core, but distribution, sensitive-value handling, executor receipts, corpus testing, and outside validation remain material launch blockers.
+Continue private development and a small researcher beta. Do not launch a paid public product yet. ScopeRook is positioned as the independent bug bounty operating layer for Daybreak Blue. The continuous target portfolio, history, public intelligence, sanitized imports, and evidence controls form a credible product core, but distribution, sensitive-value handling, executor receipts, corpus testing, and outside validation remain material launch blockers.
 
 ScopeRook must be sold as an operating layer that helps researchers choose, document, resume, and support authorized bounty work. It must not promise accepted findings or income.
 
@@ -20,7 +20,7 @@ ScopeRook must be sold as an operating layer that helps researchers choose, docu
 
 ## Engineering gates before a public beta
 
-1. Select the repository and commercial-component licenses. Produce attribution notices for every dependency and data source.
+1. Maintain the Apache-2.0 community-core license, NOTICE file, and attribution records for every integrated dependency and data source.
 2. Add signed builds, checksums, SBOMs, a security policy, vulnerability-reporting address, privacy notice, and documented update provenance.
 3. Add a private sensitive-value vault that exposes stable local references to the agent and never returns raw credentials or session material.
 4. Define a versioned engagement schema with backup, restore, migration, downgrade, and corrupt-record recovery tests.
@@ -33,7 +33,7 @@ ScopeRook must be sold as an operating layer that helps researchers choose, docu
 
 The repository now has a concise product front page, real dashboard and social-preview assets, a security policy, contribution and conduct guidance, structured issue forms, a pull-request checklist, release notes, and pinned cross-platform CI for Python 3.11 and 3.12. The 100-target and 5,000-session portfolio gate passes, along with 45 unit tests.
 
-The next publication gate is the repository license. After that choice, build and test the exact v0.8.0 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
+The Apache-2.0 community-core license is selected. Build and test the exact v0.8.0 archive, publish its checksum, and verify CI on the public commit. Signed distribution, SBOM generation, private sensitive-value references, versioned migrations, executor receipts, and outside-user validation remain open before a paid public launch.
 
 ## Beta success gates
 

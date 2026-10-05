@@ -27,7 +27,7 @@ Primary references:
 
 ## Product position
 
-ScopeRook should be the **bug-bounty operating layer for a capable security agent**, rather than the agent or scanner itself. It should make the model consistently answer five questions before spending requests:
+ScopeRook should be the **bug-bounty operating layer for Daybreak Blue**, rather than another agent or scanner. It should make Daybreak consistently answer five questions before spending requests:
 
 1. Is this exact activity authorized now?
 2. What concrete attacker payoff could the program reward?
@@ -41,7 +41,7 @@ Its moat is the connected record from policy to candidate, control, evidence has
 
 The product must not bundle, resell, proxy, or provide downstream access to Daybreak. Each customer uses ScopeRook as a local stdio MCP from their own approved Codex workspace or API project. ScopeRook does not collect the customer's OpenAI credentials.
 
-Daybreak Blue is a strong fit for secure code review, vulnerability discovery and triage, threat modeling, synthetic validation, evidence reduction, remediation, and patch verification. Advanced penetration testing, exploit development, or live exploit-chain validation belongs to a separately approved Daybreak Red workflow or a human-operated authorized executor. ScopeRook should expose that distinction in its agent brief instead of letting the model infer it.
+Daybreak Blue is a strong fit for secure code review, vulnerability discovery and triage, threat modeling, synthetic validation, evidence reduction, remediation, and patch verification. Advanced live testing and exploit-chain validation remain separate, explicitly authorized executor work. ScopeRook should expose that distinction in its agent brief instead of letting the model infer it.
 
 The MCP should optimize for Daybreak by returning compact structured objects rather than long prose, presenting one next action, keeping current scope and evidence state durable, marking source text as untrusted data, and putting authorization and request limits in code outside the model.
 
@@ -76,7 +76,7 @@ Official boundaries:
 2. **Sensitive-value vault:** keep session material outside model context and expose only stable local tokens. The MCP must not become a credential manager exposed to the agent.
 3. **Executor receipts:** optional adapters receive a short-lived capability containing exact asset, activity, maximum requests, concurrency, deadline, redirect rule, user agent, and stop conditions. No generic shell or arbitrary command tool.
 4. **Postman import:** apply the same value-stripping contract now implemented for HAR and OpenAPI JSON.
-5. **Signed distribution:** license choice, signed releases, SBOM, security policy, update provenance, and reproducible package tests.
+5. **Signed distribution:** signed releases, SBOM, security policy, update provenance, Apache-2.0 notices, and reproducible package tests.
 6. **External validation:** at least ten researchers complete the workflow, three use it repeatedly, and evidence shows reduced time or improved report completeness. Downloads and tool-call counts are not sufficient.
 
 The measurable release gates and launch sequence are maintained in [`launch-readiness.md`](launch-readiness.md).
@@ -88,4 +88,4 @@ The measurable release gates and launch sequence are maintained in [`launch-read
 - **Team:** shared policy and methodology packs, roles, centralized tamper-evident audit records, and organization support.
 - **Optional executors:** separately installed and disabled by default. Start with local artifact analysis and authenticated owner-versus-control comparisons; add broader active tools only after capability receipts and independent request accounting pass adversarial tests.
 
-This position is narrower than Strix or Neo, but it is more credible for independent bounty researchers: fewer wasted candidates, fewer unsupported reports, better privacy, and a clear record of whether the work produced accepted findings and cash.
+This position is narrower than Strix or Neo, but it gives Daybreak Blue users a clearer product to buy: fewer repeated or wasted candidates, fewer unsupported reports, better privacy, and a durable record of whether the work produced accepted findings and cash.

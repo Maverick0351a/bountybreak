@@ -2,9 +2,11 @@
 
 ## Position
 
-ScopeRook should sell a reliable authorization, research, synthetic-validation, evidence, and reporting workflow for security agents. It should not sell a promise to find bounties, access to exploit code, or unrestricted target automation.
+ScopeRook should sell as the **local bug bounty operating layer for Daybreak Blue**. Daybreak Blue provides the security reasoning; ScopeRook provides the durable target portfolio, authorization state, public intelligence, validation contract, evidence chain, reporting state, and outcome history that make repeated bounty work practical.
 
-The useful differentiator is a local-first continuous hunting record: a researcher or Daybreak agent can choose a target, resume the exact unfinished lane, avoid repeating old work, preserve scope revisions and evidence, and learn from triage and financial outcomes. An optional bring-your-own-cloud sandbox can later run only reviewed synthetic fixtures in the customer's cloud account.
+The product should sell workflow quality and continuity rather than model access. Customers bring their own approved Codex workspace or API project; ScopeRook does not bundle, proxy, resell, or collect access credentials for Daybreak Blue. It should not sell a promise to find bounties, access to exploit code, or unrestricted target automation.
+
+The useful differentiator is a local-first continuous hunting record: a Daybreak Blue user can choose a target, resume the exact unfinished lane, avoid repeating old work, preserve scope revisions and evidence, and learn from triage and financial outcomes. An optional bring-your-own-cloud sandbox can later run only reviewed synthetic fixtures in the customer's cloud account.
 
 ## Initial offer
 
@@ -14,8 +16,8 @@ After validation:
 
 | Plan | Suggested price | Included value |
 | --- | ---: | --- |
-| Community | Free | Local MCP, continuous target portfolio and history, scope records, current public-source lookups, existing-tool routing, sanitized HAR/OpenAPI/Nuclei metadata import, symbolic simulation, bundled synthetic labs, local evidence files |
-| Pro | $19/month or $190/year | Signed policy snapshots and change alerts, private lab packs, richer evidence export, job history, update channel, BYOC Oracle orchestration, individual commercial use |
+| Community | Free | Apache-2.0 Daybreak Blue MCP, continuous target portfolio and history, scope records, current public-source lookups, existing-tool routing, sanitized HAR/OpenAPI/Nuclei metadata import, symbolic simulation, bundled synthetic labs, local evidence files |
+| Pro | $19/month or $190/year | Supported Daybreak Blue workflow packs, signed policy snapshots and change alerts, private lab packs, richer evidence export, job history, update channel, and BYOC Oracle orchestration |
 | Team | $49/user/month, three-seat minimum | Shared policy packs, role controls, centralized audit records, reusable team labs, support, and organization billing |
 | Enterprise | Custom | Self-hosted control plane, SSO, retention controls, deployment review, procurement, and support commitments |
 
@@ -31,7 +33,7 @@ Cloud compute is separate. With BYOC, the customer pays Oracle directly and Scop
 
 ## Before charging
 
-- Select a repository license and decide which cloud and team components, if any, remain proprietary. Apache-2.0 maximizes adoption; AGPL protects hosted improvements but can slow enterprise adoption.
+- Keep the Apache-2.0 community-core boundary clear and decide which future hosted, collaboration, support, and commercial components remain separate.
 - Review the redistribution, attribution, and commercial-use terms for every external data source. Prefer live links and normalized metadata over repackaging third-party exploit content.
 - Add signed releases, an update provenance story, a security policy, vulnerability reporting address, privacy notice, acceptable-use terms, and a clear statement that program authorization remains target-specific.
 - Keep telemetry opt-in. Never collect target URLs, credentials, program text, evidence bodies, or report drafts by default.

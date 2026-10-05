@@ -2,27 +2,30 @@
   <img src="static/brand.svg" width="96" alt="ScopeRook logo">
 </p>
 
-<h1 align="center">ScopeRook</h1>
+<h1 align="center">ScopeRook for Daybreak Blue</h1>
 
 <p align="center"><strong>Scope first. Proof always.</strong></p>
 
 <p align="center">
-  A local-first operating layer for continuous, authorized bug bounty research with Codex, Daybreak Blue, and other MCP clients.
+  The local-first bug bounty operating layer built for Daybreak Blue.
 </p>
 
 <p align="center">
   <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Maverick0351a/scoperook/ci.yml?branch=main&label=tests">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
   <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-f0444f">
+  <img alt="Built for Daybreak Blue" src="https://img.shields.io/badge/built%20for-Daybreak%20Blue-b64956">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-25171d">
   <img alt="Version 0.8.0" src="https://img.shields.io/badge/version-0.8.0-b64956">
 </p>
 
 ![ScopeRook dashboard](docs/assets/scoperook-overview.png)
 
-ScopeRook gives a security agent durable memory and explicit controls for the full bounty workflow: target selection, current scope, exact assets, coverage history, public vulnerability intelligence, candidate economics, validation contracts, evidence integrity, concise reporting, triage state, costs, time, and received cash. It keeps that state on the researcher's computer and returns one explainable next action when work resumes.
+Daybreak Blue supplies the security reasoning. ScopeRook supplies the durable operating context around it: target selection, current scope, exact assets, coverage history, public vulnerability intelligence, candidate economics, validation contracts, evidence integrity, concise reporting, triage state, costs, time, and received cash. It keeps that state on the researcher's computer and returns one explainable next action when work resumes.
 
 It does **not** scan targets, run arbitrary commands, hold credentials, or submit reports. Target-facing execution remains a separate, explicitly authorized step.
+
+ScopeRook is an independent product built to work with Daybreak Blue through an approved Codex workspace or API project. It does not bundle, proxy, resell, or provide access to Daybreak Blue and is not affiliated with or endorsed by OpenAI.
 
 | Resume without reconstruction | Fail closed on stale scope | Prove only what happened |
 |---|---|---|
@@ -44,15 +47,15 @@ python workbench.py --data-dir C:/private/scoperook-data --port 8767
 
 AI drafting is off by default. An optional OpenAI-compatible local model can be selected explicitly with `--model-port PORT`; ScopeRook connects only to `127.0.0.1:PORT` for a requested draft. There is no cloud fallback, API-key collection, automatic model download, or background prompt transfer.
 
-## Connect an MCP client
+## Connect Daybreak Blue
 
-`scoperook_daybreak_server.py` is the primary dependency-free stdio MCP server. Register it with an explicit Python executable, repository path, private data directory, and optional WSL distribution for reviewed synthetic labs:
+`scoperook_daybreak_server.py` is the primary dependency-free stdio MCP server for the Daybreak Blue workflow. Register it in Codex with an explicit Python executable, repository path, private data directory, and optional WSL distribution for reviewed synthetic labs:
 
 ```sh
 codex mcp add scoperook -- python C:/path/to/scoperook/scoperook_daybreak_server.py --data-dir C:/private/scoperook-data --sandbox-distro Ubuntu
 ```
 
-Claude and other stdio MCP clients use the same command and arguments. `scoperook_mcp.py` remains a smaller compatibility server.
+Other stdio MCP clients can use the same command and arguments, while `scoperook_mcp.py` remains a smaller compatibility server. ScopeRook's product experience and prompts are optimized for Daybreak Blue.
 
 The primary server exposes compact tools, resources, and prompts for:
 
@@ -140,6 +143,8 @@ The suite covers the web API, portfolio/history behavior, a 100-target and 5,000
 
 ## Status and license
 
-ScopeRook 0.8.0 is a **private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on license selection, signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. ScopeRook does not promise accepted reports or income.
+ScopeRook 0.8.0 is a **Daybreak Blue private-beta candidate**. The continuous workflow and scale tests are implemented; public charging remains blocked on signed distribution, sensitive-value handling, executor capability receipts, and outside researcher validation. ScopeRook does not promise accepted reports or income.
 
-A project license has not yet been selected. The source is visible for evaluation, but redistribution and derivative-use rights are not granted until a license is added.
+The community core is licensed under the [Apache License 2.0](LICENSE). Future hosted, collaboration, support, and commercial components may be offered separately.
+
+ScopeRook is an independent project. OpenAI, Codex, and Daybreak Blue names belong to their respective owners; their use here describes compatibility and the intended workflow.
