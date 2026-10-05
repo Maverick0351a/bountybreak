@@ -53,6 +53,8 @@ Official boundaries:
 ## What is implemented now
 
 - Closed schemas and stdio-only local operation.
+- Cross-target portfolio with target profile, documentation state, deterministic next action, and metadata-only queue output.
+- Dated target-profile, program-scope, asset-context, coverage-session, candidate, evidence, import, and outcome history with bounded detailed reads.
 - Explicit current program intake and exact assets.
 - Candidate records with attacker motive, plausible payoff, duplicate risk, setup cost, proof strength, request estimate, and pursue/hold/stop decision.
 - Transparent candidate ranking that is explicitly not severity or acceptance probability.
@@ -60,6 +62,7 @@ Official boundaries:
 - Compact Daybreak Blue agent brief with phase-specific tool choices.
 - Local capability registry that routes an agent to already installed human, CLI, service, or MCP tools without launching them.
 - Secret-reducing HAR and OpenAPI JSON import that keeps route shape and source hashes while discarding sensitive values and off-origin HAR entries.
+- Conservative Nuclei-template metadata import that retains provenance and risk flags while discarding requests, payloads, matchers, extractors, and code.
 - Dated hashes for each structured program-intake revision and a field-name-only comparison that never widens scope automatically.
 - Current CVE, KEV, NVD, EPSS, GitHub Advisory, OSV, CIRCL, and Exploit-DB metadata research without fetching exploit files.
 - Offline symbolic simulation and reviewed, network-isolated synthetic labs with mandatory negative controls.
@@ -75,6 +78,8 @@ Official boundaries:
 4. **Postman import:** apply the same value-stripping contract now implemented for HAR and OpenAPI JSON.
 5. **Signed distribution:** license choice, signed releases, SBOM, security policy, update provenance, and reproducible package tests.
 6. **External validation:** at least ten researchers complete the workflow, three use it repeatedly, and evidence shows reduced time or improved report completeness. Downloads and tool-call counts are not sufficient.
+
+The measurable release gates and launch sequence are maintained in [`launch-readiness.md`](launch-readiness.md).
 
 ## Product roadmap
 

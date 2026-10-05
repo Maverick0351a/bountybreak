@@ -293,10 +293,17 @@ def agent_brief(records: list[dict], data_dir: Path, engagement_id: str = "", pl
     context = None
     review = None
     if selected:
+        profile = selected.get("target_profile") if isinstance(selected.get("target_profile"), dict) else None
+        sessions = selected.get("hunt_sessions") if isinstance(selected.get("hunt_sessions"), list) else []
+        assets = selected.get("assets") if isinstance(selected.get("assets"), list) else []
         context = {
             "id": selected["id"], "name": selected.get("name"), "kind": selected.get("kind"),
-            "assets": [entry.get("value") for entry in selected.get("assets", [])],
+            "assets": [entry.get("value") for entry in assets],
+            "documented_asset_count": sum(isinstance(entry.get("context"), dict) for entry in assets),
             "scope_gate": intake_gate(selected),
+            "target_profile": profile,
+            "hunt_session_count": len(sessions),
+            "latest_hunt_session": sessions[-1] if sessions else None,
             "candidate_count": len(selected.get("plans", [])),
             "observation_count": len(selected.get("observations", [])),
             "latest_outcome": (selected.get("outcomes") or [{}])[-1].get("status"),

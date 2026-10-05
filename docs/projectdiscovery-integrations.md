@@ -21,6 +21,16 @@ ProjectDiscovery already supplies capable executors. ScopeRook should not reprod
 | Naabu | Small explicit port allowlist on one authorized host | Disabled by default; Nmap probe data excluded |
 | Vulnx | Public vulnerability and technology metadata | Research only; never proof of target exposure |
 
+## Implemented Nuclei metadata intake
+
+ScopeRook now has a dependency-free Nuclei template importer for researcher-reviewed local YAML files. It is an intelligence boundary, not an executor. The importer requires an exact immutable ProjectDiscovery `nuclei-templates` commit and repository path, verifies the MIT catalog record, hashes the local source, extracts a small metadata allowlist, flags risky or expanding template features, and stores a sanitized JSON record under the engagement. Request bodies, raw requests, payload values, matchers, extractors, and code are never retained.
+
+The lexical parser intentionally rejects ambiguous YAML instead of trying to reproduce Nuclei's full parser. It does not resolve workflows or includes, contact the upstream repository, validate a template signature, invoke Nuclei, or infer that a target is affected. The recorded upstream URL is declared provenance until separately network-verified.
+
+Nuclei's `metadata.max-request` is descriptive template metadata rather than an engine-enforced hard ceiling. ScopeRook therefore marks it `metadata_only_unenforced`; a future executor must independently count requests. The importer also treats code, JavaScript, headless, file, workflow, fuzzing, payload, raw-request, OOB, unsafe, redirect, race, state-changing, and expanding-template features as explicit review flags.
+
+The strict boundary also reflects upstream security history. The published advisory GHSA-jpf4-98qj-qr67 says Nuclei before 3.10.0 could run unsigned code templates through the DAST path; 3.10.0 fixed that route. Current Nuclei 3.11 release notes say JavaScript templates require signatures. ScopeRook does not treat a signature field or a newer engine version as sufficient authorization to run a template.
+
 The live machine inventory on 2026-10-04 found none of these ProjectDiscovery binaries. The `httpx` command on PATH belongs to Python's HTTP client package and must not be treated as ProjectDiscovery httpx. ScopeRook therefore catalogs these integrations as `not_checked` and will not route to them until an exact installed executable is separately registered.
 
 ProjectDiscovery's research page reports that most observed agent failures came from execution rather than missing security knowledge. That supports ScopeRook's product focus: deterministic phase selection, exact scope, narrow executor contracts, negative controls, and evidence receipts instead of another broad autonomous scanner.
@@ -33,6 +43,11 @@ Primary sources:
 - https://github.com/projectdiscovery
 - https://github.com/projectdiscovery/nuclei
 - https://github.com/projectdiscovery/nuclei-templates
+- https://github.com/projectdiscovery/nuclei/blob/dev/SYNTAX-REFERENCE.md
+- https://github.com/projectdiscovery/nuclei/blob/dev/nuclei-jsonschema.json
+- https://github.com/projectdiscovery/nuclei-templates/discussions/7723
+- https://github.com/projectdiscovery/nuclei/security/advisories/GHSA-jpf4-98qj-qr67
+- https://github.com/projectdiscovery/nuclei/releases
 - https://github.com/projectdiscovery/httpx
 - https://github.com/projectdiscovery/katana
 - https://github.com/projectdiscovery/interactsh

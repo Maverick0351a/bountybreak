@@ -15,17 +15,23 @@ import sys
 from typing import Any
 
 import agent_workflow
+import hunt_portfolio
 import integration_catalog
+import nuclei_template_import
 import scoperook_mcp as core
 from sandbox_runner import LabRunner
 import surface_import
 from tool_router import INTERFACES, OPERATION_CLASSES, OUTPUT_FORMATS, PHASES, ToolRegistry
-from workbench import VALIDATION_ENVIRONMENTS
+from workbench import (
+    ACCOUNT_STATES, ASSET_REWARD_STATES, ASSET_SCOPE_STATES, ASSET_TEST_STATES,
+    ASSET_TYPES, COVERAGE_LANES, HUNT_SESSION_STATES, REQUEST_COUNT_STATES,
+    TARGET_PLATFORMS, TARGET_PRIORITIES, TARGET_STATUSES, VALIDATION_ENVIRONMENTS,
+)
 
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = core.PROTOCOL
-SERVER_VERSION = "0.7.0"
+SERVER_VERSION = "0.8.0"
 SERVER_NAME = "scoperook-daybreak"
 
 
@@ -75,6 +81,54 @@ VALIDATION_PROPERTIES = {
     "max_requests": {"type": "integer", "minimum": 0, "maximum": 100},
 }
 
+TARGET_PROFILE_PROPERTIES = {
+    "engagement_id": {"type": "string", "maxLength": 64},
+    "platform": {"type": "string", "enum": sorted(TARGET_PLATFORMS)},
+    "program_status": {"type": "string", "enum": sorted(TARGET_STATUSES)},
+    "priority": {"type": "string", "enum": sorted(TARGET_PRIORITIES)},
+    "attacker_payoffs": {"type": "array", "minItems": 1, "maxItems": 8,
+                         "items": {"type": "string", "minLength": 1, "maxLength": 200}},
+    "technologies": {"type": "array", "maxItems": 30,
+                     "items": {"type": "string", "minLength": 1, "maxLength": 120}},
+    "account_state": {"type": "string", "enum": sorted(ACCOUNT_STATES)},
+    "account_reference": {"type": "string", "maxLength": 80,
+                          "pattern": "^(?:|[A-Za-z0-9][A-Za-z0-9._ -]{0,79})$"},
+    "research_strategy": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 500},
+    "revisit_after": {"type": "string", "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$"},
+    "tags": {"type": "array", "maxItems": 20,
+             "items": {"type": "string", "minLength": 1, "maxLength": 80}},
+}
+
+ASSET_CONTEXT_PROPERTIES = {
+    "engagement_id": {"type": "string", "maxLength": 64},
+    "asset": {"type": "string", "minLength": 1, "maxLength": 300},
+    "asset_type": {"type": "string", "enum": sorted(ASSET_TYPES)},
+    "scope_status": {"type": "string", "enum": sorted(ASSET_SCOPE_STATES)},
+    "reward_status": {"type": "string", "enum": sorted(ASSET_REWARD_STATES)},
+    "test_status": {"type": "string", "enum": sorted(ASSET_TEST_STATES)},
+    "constraints": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "notes": {"type": "string", "maxLength": 1000},
+}
+
+HUNT_SESSION_PROPERTIES = {
+    "engagement_id": {"type": "string", "maxLength": 64},
+    "lane": {"type": "string", "enum": sorted(COVERAGE_LANES)},
+    "status": {"type": "string", "enum": sorted(HUNT_SESSION_STATES)},
+    "environment": {"type": "string", "enum": sorted(VALIDATION_ENVIRONMENTS)},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1500},
+    "candidate_ids": {"type": "array", "maxItems": 20,
+                      "items": {"type": "string", "minLength": 1, "maxLength": 12}},
+    "source_refs": {"type": "array", "maxItems": 20,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 300}},
+    "request_count_state": {"type": "string", "enum": sorted(REQUEST_COUNT_STATES)},
+    "target_requests": {"type": "integer", "minimum": 0, "maximum": 100000},
+    "human_minutes": {"type": "integer", "minimum": 0, "maximum": 100000},
+    "paid_cost_usd": {"type": "number", "minimum": 0, "maximum": 1000000},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 500},
+    "revisit_after": {"type": "string", "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$"},
+}
+
 REGISTRY_PROPERTIES = {
     "tool_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"},
     "display_name": {"type": "string", "minLength": 1, "maxLength": 100},
@@ -113,6 +167,38 @@ EXTRA_TOOLS = [
         "scoperook_set_validation_contract",
         "Record an identity, state, sequence, control, cleanup, and request-bounded proof contract for one candidate. This plans verification but never runs it or grants authorization.",
         VALIDATION_PROPERTIES, list(VALIDATION_PROPERTIES), read_only=False,
+    ),
+    _tool(
+        "scoperook_set_target_profile",
+        "Create or update the durable non-secret target profile used to resume continuous bounty work: platform, status, priority, attacker payoffs, technologies, account state, strategy, next action, and revisit date.",
+        TARGET_PROFILE_PROPERTIES, list(TARGET_PROFILE_PROPERTIES), read_only=False,
+    ),
+    _tool(
+        "scoperook_set_asset_context",
+        "Document the current scope, reward state, test state, type, and constraints for one exact recorded asset. History is preserved and the record never grants authorization.",
+        ASSET_CONTEXT_PROPERTIES, list(ASSET_CONTEXT_PROPERTIES), read_only=False,
+    ),
+    _tool(
+        "scoperook_record_hunt_session",
+        "Append one sanitized hunting pass with coverage lane, environment, result state, candidate links, request accounting, time, cost, next action, and revisit date.",
+        HUNT_SESSION_PROPERTIES, list(HUNT_SESSION_PROPERTIES), read_only=False,
+    ),
+    _tool(
+        "scoperook_hunt_portfolio",
+        "Return the compact cross-target resume queue with documentation, policy freshness, lane coverage, candidate states, measured effort, and one deterministic next target. Assets and scope text are omitted.",
+        {"stale_after_days": {"type": "integer", "minimum": 1, "maximum": 90}},
+        [], read_only=True,
+    ),
+    _tool(
+        "scoperook_get_target_history",
+        "Return a paginated newest-first timeline for one target across profile and scope revisions, assets, hunting passes, candidates, controls, evidence, artifacts, and outcomes.",
+        {
+            "engagement_id": {"type": "string", "maxLength": 64},
+            "include_details": {"type": "boolean"},
+            "offset": {"type": "integer", "minimum": 0, "maximum": 100000},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 200},
+        },
+        ["engagement_id"], read_only=True,
     ),
     _tool(
         "scoperook_agent_brief",
@@ -192,6 +278,28 @@ EXTRA_TOOLS = [
         [], read_only=True,
     ),
     _tool(
+        "scoperook_import_nuclei_template",
+        "Import a local reviewed ProjectDiscovery Nuclei YAML template as sanitized prior-art metadata. Records a hash, immutable upstream declaration, protocols, request-risk flags, and candidate research gates; never executes or validates the template.",
+        {
+            "engagement_id": {"type": "string", "maxLength": 64},
+            "source_reference": {"type": "string", "minLength": 1, "maxLength": 300},
+            "asset": {"type": "string", "minLength": 1, "maxLength": 300},
+            "upstream_commit": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+            "upstream_path": {"type": "string", "minLength": 1, "maxLength": 500},
+        },
+        ["engagement_id", "source_reference", "asset", "upstream_commit", "upstream_path"],
+        read_only=False,
+    ),
+    _tool(
+        "scoperook_get_nuclei_template_intelligence",
+        "Read one sanitized Nuclei template-intelligence record by exact local id. The record contains metadata and risk gates, never request bodies or payload values.",
+        {
+            "engagement_id": {"type": "string", "maxLength": 64},
+            "import_id": {"type": "string", "pattern": "^nuclei-template-[0-9a-f]{16}$"},
+        },
+        ["engagement_id", "import_id"], read_only=True,
+    ),
+    _tool(
         "scoperook_import_surface_artifact",
         "Import a local HAR or OpenAPI JSON file from the engagement directory. Keep route shape while dropping headers, cookies, bodies, examples, defaults, query values, response content, and off-origin HAR requests.",
         {
@@ -238,6 +346,12 @@ RESOURCES = [
         "description": "Observed/derived/unverified labels, negative controls, hashes, and report gates.",
         "mimeType": "text/markdown",
     },
+    {
+        "uri": "scoperook://methodology/continuous-hunt",
+        "name": "ScopeRook continuous target-hunting method",
+        "description": "Portfolio selection, target resume, coverage history, and session closeout rules.",
+        "mimeType": "text/markdown",
+    },
 ]
 
 RESOURCE_TEXT = {
@@ -264,6 +378,17 @@ Daybreak model access is supplied by the customer's approved OpenAI account. Sco
 - Evidence references must remain within the engagement directory; ScopeRook verifies size and SHA-256 before saving a complete manifest.
 - A source match, scanner result, synthetic pass, or version string alone does not prove a target vulnerability.
 """,
+    RESOURCES[2]["uri"]: """# Continuous target-hunting method
+
+1. Call `scoperook_hunt_portfolio` and use its one deterministic next target or documentation action.
+2. Read that target with `scoperook_get_engagement`, then load its paginated history and compact agent brief.
+3. Refresh current program policy before target traffic; the portfolio freshness cue is administrative only.
+4. Work one bounded coverage lane and preserve every lead, stop reason, candidate, control, and outcome.
+5. Close the pass with `scoperook_record_hunt_session`, including measured time, cost, target-request state, next action, and revisit date.
+6. Keep passwords, tokens, cookies, MFA material, raw customer data, and private response bodies outside ScopeRook.
+
+The portfolio records decision-relevant history so another approved agent can resume work. It never turns prior authorization into standing permission.
+""",
 }
 
 PROMPTS = [
@@ -279,6 +404,11 @@ PROMPTS = [
             {"name": "engagement_id", "description": "Local engagement id", "required": True},
             {"name": "plan_id", "description": "Candidate plan id", "required": True},
         ],
+    },
+    {
+        "name": "scoperook-continuous-hunt",
+        "description": "Resume the highest-priority documented target without losing scope or history.",
+        "arguments": [],
     },
 ]
 
@@ -302,7 +432,9 @@ class ScopeRookTools(core.ScopeRookTools):
                 "deterministic agent workflow", "candidate economics", "local evidence hashing",
                 "reviewed synthetic labs", "existing-tool capability routing",
                 "optional integration catalog",
+                "sanitized Nuclei template intelligence",
                 "role state and sequence validation contracts",
+                "continuous target portfolio and history",
                 "secret-reducing HAR and OpenAPI route import",
             ])
             result["excluded_capabilities"] = sorted(set(result["excluded_capabilities"] + [
@@ -321,6 +453,39 @@ class ScopeRookTools(core.ScopeRookTools):
             plan_id = core.clean_text(args.get("plan_id"), 12)
             contract = self.store.set_validation_contract(ident, plan_id, args)
             return {"engagement_id": ident, "plan_id": plan_id, "validation_contract": contract}
+        if name == "scoperook_set_target_profile":
+            core._only(args, set(TARGET_PROFILE_PROPERTIES))
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            profile = self.store.set_target_profile(ident, args)
+            return {"engagement_id": ident, "target_profile": profile,
+                    "message": "Target profile and revision history saved locally"}
+        if name == "scoperook_set_asset_context":
+            core._only(args, set(ASSET_CONTEXT_PROPERTIES))
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            context = self.store.set_asset_context(ident, args)
+            return {"engagement_id": ident, "asset_context": context,
+                    "message": "Asset context saved; re-check current program terms before testing"}
+        if name == "scoperook_record_hunt_session":
+            core._only(args, set(HUNT_SESSION_PROPERTIES))
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            session = self.store.add_hunt_session(ident, args)
+            return {"engagement_id": ident, "hunt_session": session,
+                    "message": "Sanitized hunting pass appended to target history"}
+        if name == "scoperook_hunt_portfolio":
+            core._only(args, {"stale_after_days"})
+            records, warnings = self.store.snapshot()
+            portfolio = hunt_portfolio.build_portfolio(
+                records, stale_after_days=args.get("stale_after_days", 14))
+            portfolio["unreadable_records"] = warnings
+            return portfolio
+        if name == "scoperook_get_target_history":
+            core._only(args, {"engagement_id", "include_details", "offset", "limit"})
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            return hunt_portfolio.target_history(
+                self.store.get(ident), self.store.directory / ident,
+                include_details=args.get("include_details", False),
+                offset=args.get("offset", 0), limit=args.get("limit", 50),
+            )
         if name == "scoperook_compare_intake":
             core._only(args, {"engagement_id"})
             return self.store.compare_intake(core.clean_text(args.get("engagement_id"), 64))
@@ -340,6 +505,18 @@ class ScopeRookTools(core.ScopeRookTools):
                 "phase": "runtime proof design",
                 "tools": ["scoperook_set_validation_contract"],
             })
+            brief["phase_tools"].insert(0, {
+                "phase": "target portfolio and resume",
+                "tools": ["scoperook_hunt_portfolio", "scoperook_get_target_history",
+                          "scoperook_set_target_profile", "scoperook_set_asset_context",
+                          "scoperook_record_hunt_session"],
+            })
+            for phase in brief["phase_tools"]:
+                if phase["phase"] == "research":
+                    phase["tools"].extend([
+                        "scoperook_import_nuclei_template",
+                        "scoperook_get_nuclei_template_intelligence",
+                    ])
             return brief
         if name == "scoperook_work_queue":
             core._only(args, {"engagement_id"})
@@ -392,6 +569,23 @@ class ScopeRookTools(core.ScopeRookTools):
                 query=args.get("query", ""), phase=args.get("phase", ""),
                 operation_class=args.get("operation_class", ""), limit=args.get("limit", 10),
             )
+        if name == "scoperook_import_nuclei_template":
+            core._only(args, {"engagement_id", "source_reference", "asset",
+                              "upstream_commit", "upstream_path"})
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            return nuclei_template_import.import_template(
+                self.store.get(ident), self.store.directory / ident,
+                source_reference=args.get("source_reference"), asset=args.get("asset"),
+                upstream_commit=args.get("upstream_commit"),
+                upstream_path=args.get("upstream_path"),
+            )
+        if name == "scoperook_get_nuclei_template_intelligence":
+            core._only(args, {"engagement_id", "import_id"})
+            ident = core.clean_text(args.get("engagement_id"), 64)
+            self.store.get(ident)
+            return nuclei_template_import.get_template_intelligence(
+                self.store.directory / ident, args.get("import_id"),
+            )
         if name == "scoperook_import_surface_artifact":
             core._only(args, {"engagement_id", "source_reference", "format", "asset"})
             ident = core.clean_text(args.get("engagement_id"), 64)
@@ -434,6 +628,17 @@ def _prompt(name: str, arguments: Any) -> dict:
             "gaps. Do not expand severity or impact beyond what is directly demonstrated."
         )
         return {"description": PROMPTS[1]["description"],
+                "messages": [{"role": "user", "content": {"type": "text", "text": text}}]}
+    if name == "scoperook-continuous-hunt":
+        text = (
+            "Use ScopeRook as the durable source of truth for a continuous bounty pass. Call "
+            "`scoperook_hunt_portfolio`, follow its smallest documentation or selection action, and if a "
+            "target is selected call `scoperook_get_target_history`, `scoperook_get_engagement`, and "
+            "`scoperook_agent_brief` before proposing work. Refresh current policy before target traffic. "
+            "Work one bounded coverage lane, keep source leads separate from observations, and finish by "
+            "calling `scoperook_record_hunt_session` with measured effort and the next resume point."
+        )
+        return {"description": PROMPTS[2]["description"],
                 "messages": [{"role": "user", "content": {"type": "text", "text": text}}]}
     raise ValueError("Prompt not found")
 

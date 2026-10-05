@@ -45,6 +45,21 @@ PLAN_DETAIL_FIELDS = (
 )
 UNRESOLVED = re.compile(r"^(unknown|tbd|pending|not checked|not reviewed|unavailable)(\b|$)", re.I)
 VALIDATION_ENVIRONMENTS = {"offline_source", "synthetic_lab", "researcher_owned_runtime", "authorized_target"}
+TARGET_PLATFORMS = {"bugcrowd", "hackerone", "intigriti", "yeswehack", "direct", "other"}
+TARGET_STATUSES = {"active", "paused", "closed"}
+TARGET_PRIORITIES = {"high", "normal", "low", "hold"}
+ACCOUNT_STATES = {"not_required", "ready", "pending", "blocked", "unavailable"}
+ACCOUNT_LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,79}$")
+ASSET_TYPES = {"web", "api", "mobile", "repository", "hardware", "cloud", "other"}
+ASSET_SCOPE_STATES = {"in_scope", "out_of_scope", "conditional", "unknown"}
+ASSET_REWARD_STATES = {"rewarded", "no_reward", "unknown"}
+ASSET_TEST_STATES = {"untested", "active", "paused", "closed"}
+COVERAGE_LANES = {
+    "identity_access", "business_logic", "api", "integrations_webhooks", "file_processing",
+    "ai_agents", "client_mobile", "supply_chain", "infrastructure_configuration",
+}
+HUNT_SESSION_STATES = {"no_candidate", "lead", "candidate", "blocked", "paused"}
+REQUEST_COUNT_STATES = {"measured", "not_applicable", "unknown"}
 
 
 def now() -> str:
@@ -64,6 +79,38 @@ def clean_optional_text(value: object, limit: int) -> str:
     if value in (None, ""):
         return ""
     return clean_text(value, limit)
+
+
+def clean_text_list(value: object, field: str, *, maximum_items: int = 30,
+                    maximum_length: int = 120, allow_empty: bool = False) -> list[str]:
+    if not isinstance(value, list) or len(value) > maximum_items or (not value and not allow_empty):
+        requirement = "up to" if allow_empty else "1 to"
+        raise ValueError(f"{field} must contain {requirement} {maximum_items} text values")
+    cleaned = [clean_text(item, maximum_length) for item in value]
+    if len({item.casefold() for item in cleaned}) != len(cleaned):
+        raise ValueError(f"{field} values must be unique")
+    return cleaned
+
+
+def clean_date(value: object, field: str, *, optional: bool = False) -> str:
+    if optional and value in (None, ""):
+        return ""
+    text = clean_text(value, 10)
+    try:
+        datetime.strptime(text, "%Y-%m-%d")
+    except ValueError as exc:
+        raise ValueError(f"{field} must use YYYY-MM-DD") from exc
+    return text
+
+
+def clean_account_label(value: object) -> str:
+    """Accept only a non-secret local alias, never an address or credential-shaped value."""
+    if value in (None, ""):
+        return ""
+    text = clean_text(value, 80)
+    if not ACCOUNT_LABEL.fullmatch(text):
+        raise ValueError("account_reference must be a short local alias without @, URL, or secret symbols")
+    return text
 
 
 def clean_asset(value: object) -> str:
@@ -212,6 +259,173 @@ class Store:
             assets.append(asset)
             save_json(self._path(ident), item)
             return asset
+
+    def set_target_profile(self, ident: str, values: dict) -> dict:
+        """Save the durable, non-secret context needed to resume a target later."""
+        with self.lock:
+            item = self.get(ident)
+            enum_fields = {
+                "platform": TARGET_PLATFORMS,
+                "program_status": TARGET_STATUSES,
+                "priority": TARGET_PRIORITIES,
+                "account_state": ACCOUNT_STATES,
+            }
+            profile = {}
+            for field, choices in enum_fields.items():
+                value = values.get(field)
+                if value not in choices:
+                    raise ValueError(f"Unsupported {field}")
+                profile[field] = value
+            profile.update({
+                "attacker_payoffs": clean_text_list(
+                    values.get("attacker_payoffs"), "attacker_payoffs", maximum_items=8,
+                    maximum_length=200),
+                "technologies": clean_text_list(
+                    values.get("technologies"), "technologies", maximum_items=30,
+                    maximum_length=120, allow_empty=True),
+                "account_reference": clean_account_label(values.get("account_reference")),
+                "research_strategy": clean_text(values.get("research_strategy"), 1_000),
+                "next_action": clean_text(values.get("next_action"), 500),
+                "revisit_after": clean_date(values.get("revisit_after"), "revisit_after", optional=True),
+                "tags": clean_text_list(values.get("tags"), "tags", maximum_items=20,
+                                        maximum_length=80, allow_empty=True),
+                "updated_at": now(),
+            })
+            content = {key: profile[key] for key in profile if key != "updated_at"}
+            canonical = json.dumps(content, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":")).encode("utf-8")
+            profile["content_sha256"] = hashlib.sha256(canonical).hexdigest()
+            history = item.setdefault("target_profile_history", [])
+            if not isinstance(history, list):
+                raise ValueError("Existing target profile history is invalid")
+            if not history or history[-1].get("content_sha256") != profile["content_sha256"]:
+                if len(history) >= MAX_RECORDS:
+                    raise ValueError("Target profile history limit reached")
+                history.append({
+                    "recorded_at": profile["updated_at"],
+                    "content_sha256": profile["content_sha256"],
+                    "snapshot": content,
+                })
+            item["target_profile"] = profile
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return profile
+
+    def set_asset_context(self, ident: str, values: dict) -> dict:
+        """Document per-asset scope and constraints without implying authorization."""
+        with self.lock:
+            item = self.get(ident)
+            asset_value = clean_asset(values.get("asset"))
+            asset = next((entry for entry in item.get("assets", [])
+                          if entry.get("value") == asset_value), None)
+            if asset is None:
+                raise ValueError("Asset is not recorded on this engagement")
+            enum_fields = {
+                "asset_type": ASSET_TYPES,
+                "scope_status": ASSET_SCOPE_STATES,
+                "reward_status": ASSET_REWARD_STATES,
+                "test_status": ASSET_TEST_STATES,
+            }
+            context = {}
+            for field, choices in enum_fields.items():
+                value = values.get(field)
+                if value not in choices:
+                    raise ValueError(f"Unsupported {field}")
+                context[field] = value
+            if context["scope_status"] == "out_of_scope" and context["test_status"] != "closed":
+                raise ValueError("An out-of-scope asset must have test_status closed")
+            context.update({
+                "constraints": clean_text(values.get("constraints"), 1_000),
+                "notes": clean_optional_text(values.get("notes"), 1_000),
+                "reviewed_at": now(),
+            })
+            content = {key: context[key] for key in context if key != "reviewed_at"}
+            canonical = json.dumps(content, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":")).encode("utf-8")
+            context["content_sha256"] = hashlib.sha256(canonical).hexdigest()
+            history = asset.setdefault("context_history", [])
+            if not isinstance(history, list):
+                raise ValueError("Existing asset context history is invalid")
+            if not history or history[-1].get("content_sha256") != context["content_sha256"]:
+                if len(history) >= MAX_RECORDS:
+                    raise ValueError("Asset context history limit reached")
+                history.append({
+                    "reviewed_at": context["reviewed_at"],
+                    "content_sha256": context["content_sha256"],
+                    "snapshot": content,
+                })
+            asset["context"] = context
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return {"asset": asset_value, **context}
+
+    def add_hunt_session(self, ident: str, values: dict) -> dict:
+        """Append one bounded hunting pass so future agents can resume from recorded facts."""
+        with self.lock:
+            item = self.get(ident)
+            lane = values.get("lane")
+            status_value = values.get("status")
+            environment = values.get("environment")
+            count_state = values.get("request_count_state")
+            if lane not in COVERAGE_LANES:
+                raise ValueError("Unsupported coverage lane")
+            if status_value not in HUNT_SESSION_STATES:
+                raise ValueError("Unsupported hunt session status")
+            if environment not in VALIDATION_ENVIRONMENTS:
+                raise ValueError("Unsupported hunt session environment")
+            if count_state not in REQUEST_COUNT_STATES:
+                raise ValueError("Unsupported request_count_state")
+            request_count = values.get("target_requests")
+            if type(request_count) is not int or not 0 <= request_count <= 100_000:
+                raise ValueError("target_requests must be an integer from 0 to 100000")
+            if count_state in {"not_applicable", "unknown"} and request_count != 0:
+                raise ValueError("Use zero target_requests when the count is not applicable or unknown")
+            if environment in {"offline_source", "synthetic_lab", "researcher_owned_runtime"}:
+                if count_state != "not_applicable" or request_count != 0:
+                    raise ValueError("Non-target sessions must record zero, not-applicable target requests")
+            if environment == "authorized_target" and count_state == "not_applicable":
+                raise ValueError("Authorized-target sessions require measured or explicitly unknown requests")
+            human_minutes = values.get("human_minutes")
+            if type(human_minutes) is not int or not 0 <= human_minutes <= 100_000:
+                raise ValueError("human_minutes must be an integer from 0 to 100000")
+            paid_cost_usd = values.get("paid_cost_usd")
+            if type(paid_cost_usd) not in (int, float) or not 0 <= paid_cost_usd <= 1_000_000:
+                raise ValueError("paid_cost_usd must be a non-negative number")
+            candidate_ids = clean_text_list(
+                values.get("candidate_ids"), "candidate_ids", maximum_items=20,
+                maximum_length=12, allow_empty=True)
+            known_plans = {plan.get("id") for plan in item.get("plans", [])}
+            if any(plan_id not in known_plans for plan_id in candidate_ids):
+                raise ValueError("Every candidate id must belong to this engagement")
+            source_refs = clean_text_list(
+                values.get("source_refs"), "source_refs", maximum_items=20,
+                maximum_length=300, allow_empty=True)
+            sessions = item.setdefault("hunt_sessions", [])
+            if not isinstance(sessions, list):
+                raise ValueError("Existing hunt session history is invalid")
+            if len(sessions) >= MAX_RECORDS:
+                raise ValueError("Hunt session limit reached")
+            session = {
+                "id": uuid.uuid4().hex[:12],
+                "recorded_at": now(),
+                "lane": lane,
+                "status": status_value,
+                "environment": environment,
+                "summary": clean_text(values.get("summary"), 1_500),
+                "candidate_ids": candidate_ids,
+                "source_refs": source_refs,
+                "request_count_state": count_state,
+                "target_requests": request_count if count_state == "measured" else None,
+                "human_minutes": human_minutes,
+                "paid_cost_usd": round(float(paid_cost_usd), 2),
+                "next_action": clean_text(values.get("next_action"), 500),
+                "revisit_after": clean_date(
+                    values.get("revisit_after"), "revisit_after", optional=True),
+            }
+            sessions.append(session)
+            item["updated_at"] = now()
+            save_json(self._path(ident), item)
+            return session
 
     def add_plan(self, ident: str, hypothesis: str, impact: str) -> dict:
         with self.lock:

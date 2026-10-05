@@ -61,6 +61,11 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertIn("scoperook_query_osv_package", names)
         self.assertIn("scoperook_agent_brief", names)
         self.assertIn("scoperook_set_validation_contract", names)
+        self.assertIn("scoperook_set_target_profile", names)
+        self.assertIn("scoperook_set_asset_context", names)
+        self.assertIn("scoperook_record_hunt_session", names)
+        self.assertIn("scoperook_hunt_portfolio", names)
+        self.assertIn("scoperook_get_target_history", names)
         self.assertIn("scoperook_work_queue", names)
         self.assertIn("scoperook_rank_candidates", names)
         self.assertIn("scoperook_review_candidate", names)
@@ -70,6 +75,8 @@ class ScopeRookMcpTests(unittest.TestCase):
         self.assertIn("scoperook_register_tool_capability", names)
         self.assertIn("scoperook_route_existing_tools", names)
         self.assertIn("scoperook_search_integration_catalog", names)
+        self.assertIn("scoperook_import_nuclei_template", names)
+        self.assertIn("scoperook_get_nuclei_template_intelligence", names)
         self.assertIn("scoperook_import_surface_artifact", names)
         self.assertIn("scoperook_get_surface_inventory", names)
         self.assertIn("scoperook_compare_intake", names)
@@ -77,13 +84,14 @@ class ScopeRookMcpTests(unittest.TestCase):
 
     def test_resources_prompts_and_existing_tool_router(self):
         resources = handle({"jsonrpc": "2.0", "id": 1, "method": "resources/list"}, self.tools)
-        self.assertEqual(len(resources["resources"]), 2)
+        self.assertEqual(len(resources["resources"]), 3)
         resource = handle({"jsonrpc": "2.0", "id": 2, "method": "resources/read",
                            "params": {"uri": "scoperook://methodology/daybreak-blue"}}, self.tools)
         self.assertIn("separate executor preflight", resource["contents"][0]["text"])
         prompts = handle({"jsonrpc": "2.0", "id": 3, "method": "prompts/list"}, self.tools)
         self.assertEqual({item["name"] for item in prompts["prompts"]},
-                         {"scoperook-next-action", "scoperook-candidate-review"})
+                         {"scoperook-next-action", "scoperook-candidate-review",
+                          "scoperook-continuous-hunt"})
         prompt = handle({"jsonrpc": "2.0", "id": 4, "method": "prompts/get",
                          "params": {"name": "scoperook-next-action", "arguments": {}}}, self.tools)
         self.assertIn("scoperook_agent_brief", prompt["messages"][0]["content"]["text"])
@@ -203,6 +211,78 @@ class ScopeRookMcpTests(unittest.TestCase):
                 "negative_control": "Inspect the guarded path", "independent_impact_check": "Trace the sink",
                 "cleanup": "No runtime state", "max_requests": 1,
             })
+
+    def test_continuous_target_profile_history_and_nuclei_intake(self):
+        created, _gate, plan_result = self.create_candidate()
+        plan = plan_result["plan"]
+        self.tools.call("scoperook_set_target_profile", {
+            "engagement_id": created["id"], "platform": "bugcrowd",
+            "program_status": "active", "priority": "high",
+            "attacker_payoffs": ["Unauthorized access to controlled account data"],
+            "technologies": ["Example Framework"], "account_state": "ready",
+            "account_reference": "Researcher-controlled account A",
+            "research_strategy": "Work one bounded lane and preserve the negative control",
+            "next_action": "Review the identity boundary", "revisit_after": "",
+            "tags": ["authenticated", "web"],
+        })
+        self.tools.call("scoperook_set_asset_context", {
+            "engagement_id": created["id"], "asset": "https://app.example.invalid",
+            "asset_type": "web", "scope_status": "in_scope",
+            "reward_status": "rewarded", "test_status": "active",
+            "constraints": "Manual low-volume tests with researcher-controlled data only",
+            "notes": "No secret values stored",
+        })
+        session = self.tools.call("scoperook_record_hunt_session", {
+            "engagement_id": created["id"], "lane": "identity_access", "status": "lead",
+            "environment": "offline_source", "summary": "One bounded source lead remains",
+            "candidate_ids": [plan["id"]], "source_refs": ["evidence/source-note.md"],
+            "request_count_state": "not_applicable", "target_requests": 0,
+            "human_minutes": 20, "paid_cost_usd": 0,
+            "next_action": "Build the role and state table", "revisit_after": "",
+        })
+        self.assertEqual(session["hunt_session"]["human_minutes"], 20)
+
+        engagement_dir = Path(self.temp.name) / created["id"]
+        template_path = engagement_dir / "evidence" / "fixture.yaml"
+        template_path.parent.mkdir(parents=True, exist_ok=True)
+        template_path.write_text("""id: CVE-2026-12345
+info:
+  name: Example Authorization Check
+  author: researcher
+  severity: high
+  reference:
+    - https://vendor.example/advisory
+  classification:
+    cve-id: CVE-2026-12345
+  metadata:
+    max-request: 1
+    vendor: Example
+    product: Widget
+  tags: cve,authorization
+http:
+  - method: GET
+    path:
+      - \"{{BaseURL}}/private-marker\"
+""", encoding="utf-8")
+        imported = self.tools.call("scoperook_import_nuclei_template", {
+            "engagement_id": created["id"], "source_reference": "evidence/fixture.yaml",
+            "asset": "https://app.example.invalid", "upstream_commit": "d" * 40,
+            "upstream_path": "http/cves/2026/CVE-2026-12345.yaml",
+        })
+        self.assertFalse(imported["execution"]["allowed"])
+        restored = self.tools.call("scoperook_get_nuclei_template_intelligence", {
+            "engagement_id": created["id"], "import_id": imported["import_id"],
+        })
+        self.assertEqual(restored["template"]["id"], "CVE-2026-12345")
+        portfolio = self.tools.call("scoperook_hunt_portfolio", {})
+        self.assertEqual(portfolio["next_target"]["engagement_id"], created["id"])
+        self.assertTrue(portfolio["targets"][0]["documentation_complete"])
+        history = self.tools.call("scoperook_get_target_history", {
+            "engagement_id": created["id"], "limit": 100,
+        })
+        types = {event["type"] for event in history["events"]}
+        self.assertIn("hunt_session", types)
+        self.assertIn("template_intelligence", types)
 
     def test_synthetic_lab_catalog_is_bundled_and_fail_closed(self):
         result = self.tools.call("scoperook_list_synthetic_labs", {})

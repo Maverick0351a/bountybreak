@@ -4,7 +4,7 @@
 
 ScopeRook should sell a reliable authorization, research, synthetic-validation, evidence, and reporting workflow for security agents. It should not sell a promise to find bounties, access to exploit code, or unrestricted target automation.
 
-The useful differentiator is local-first privacy with a bring-your-own-cloud sandbox: sensitive engagement records stay on the researcher's machine, while an optional disposable worker runs only reviewed synthetic fixtures in the customer's cloud account.
+The useful differentiator is a local-first continuous hunting record: a researcher or Daybreak agent can choose a target, resume the exact unfinished lane, avoid repeating old work, preserve scope revisions and evidence, and learn from triage and financial outcomes. An optional bring-your-own-cloud sandbox can later run only reviewed synthetic fixtures in the customer's cloud account.
 
 ## Initial offer
 
@@ -14,7 +14,7 @@ After validation:
 
 | Plan | Suggested price | Included value |
 | --- | ---: | --- |
-| Community | Free | Local MCP, scope records, current public-source lookups, existing-tool routing, sanitized HAR/OpenAPI import, symbolic simulation, bundled synthetic labs, local evidence files |
+| Community | Free | Local MCP, continuous target portfolio and history, scope records, current public-source lookups, existing-tool routing, sanitized HAR/OpenAPI/Nuclei metadata import, symbolic simulation, bundled synthetic labs, local evidence files |
 | Pro | $19/month or $190/year | Signed policy snapshots and change alerts, private lab packs, richer evidence export, job history, update channel, BYOC Oracle orchestration, individual commercial use |
 | Team | $49/user/month, three-seat minimum | Shared policy packs, role controls, centralized audit records, reusable team labs, support, and organization billing |
 | Enterprise | Custom | Self-hosted control plane, SSO, retention controls, deployment review, procurement, and support commitments |
@@ -36,6 +36,8 @@ Cloud compute is separate. With BYOC, the customer pays Oracle directly and Scop
 - Add signed releases, an update provenance story, a security policy, vulnerability reporting address, privacy notice, acceptable-use terms, and a clear statement that program authorization remains target-specific.
 - Keep telemetry opt-in. Never collect target URLs, credentials, program text, evidence bodies, or report drafts by default.
 - Validate willingness to pay with a checkout-free pricing page and interviews before building billing.
+
+The detailed engineering and outside-user gates are in [`launch-readiness.md`](launch-readiness.md). A paid public launch remains blocked until those gates are met.
 
 The first price to test is **$19/month for Pro**. It is low enough for an independent hunter, leaves room below established professional testing suites, and can support a local-first product when cloud compute remains BYOC.
 
